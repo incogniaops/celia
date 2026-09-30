@@ -1,0 +1,86 @@
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from app.dashboard_data import (
+    get_current_biometric_profile,
+    get_glucose_trend,
+    get_insulin_carb_markers,
+    get_medication_doses_in_range,
+    has_any_data,
+)
+from app.database import get_db
+
+router = APIRouter(tags=["dashboard"])
+
+templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
+
+_DEFAULT_RANGE_DAYS = 30
+
+
+def _parse_date(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def _resolve_range(start: str | None, end: str | None) -> tuple[datetime, datetime]:
+    today = datetime.utcnow()
+    end_dt = _parse_date(end) or today
+    start_dt = _parse_date(start) or (end_dt - timedelta(days=_DEFAULT_RANGE_DAYS))
+    if start_dt > end_dt:
+        start_dt, end_dt = end_dt, start_dt
+    # Malformed/missing input falls back silently (see design.md) -- this is
+    # a convenience control, not an API contract worth rejecting input on.
+    end_dt_inclusive = end_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return start_dt, end_dt_inclusive
+
+
+def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
+    start_dt, end_dt = _resolve_range(start, end)
+
+    glucose_trend = get_glucose_trend(db, start_dt, end_dt)
+    glucose_points = [
+        {
+            "timestamp": reading.device_timestamp.isoformat(),
+            "value": float(
+                reading.historic_glucose_mgdl
+                if reading.historic_glucose_mgdl is not None
+                else reading.scan_glucose_mgdl
+            ),
+        }
+        for reading in glucose_trend
+    ]
+
+    return {
+        "start": start_dt.date().isoformat(),
+        "end": end_dt.date().isoformat(),
+        "glucose_points": glucose_points,
+        "markers": get_insulin_carb_markers(db, start_dt, end_dt),
+        "medications": get_medication_doses_in_range(db, start_dt, end_dt),
+        "biometric_profile": get_current_biometric_profile(db),
+    }
+
+
+@router.get("/dashboard", response_class=HTMLResponse)
+def dashboard(
+    request: Request, start: str | None = None, end: str | None = None, db: Session = Depends(get_db)
+) -> HTMLResponse:
+    if not has_any_data(db):
+        return templates.TemplateResponse(request, "dashboard_empty.html", {})
+
+    context = _dashboard_context(db, start, end)
+
+    # The date-range form re-submits this same route via HTMX to refresh
+    # without a full page reload (design.md); on that follow-up request we
+    # return only the inner fragment, not the full layout/CDN scripts again.
+    if request.headers.get("hx-request") == "true":
+        return templates.TemplateResponse(request, "dashboard_content.html", context)
+    return templates.TemplateResponse(request, "dashboard.html", context)

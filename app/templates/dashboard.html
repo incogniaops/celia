@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>celia — Dashboard</title>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin: 0 auto; max-width: 900px; padding: 1rem; font-family: sans-serif; }
+    canvas { width: 100% !important; max-width: 100%; }
+    .biometric-cards { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .biometric-card { border: 1px solid #ccc; border-radius: 0.5rem; padding: 0.75rem 1rem; min-width: 8rem; }
+    form.date-range { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>celia dashboard</h1>
+  <div id="dashboard-content">
+    {% include "dashboard_content.html" %}
+  </div>
+</body>
+</html>

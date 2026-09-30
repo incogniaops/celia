@@ -2,6 +2,15 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: implement dashboard — one GET /dashboard page showing the glucose
+  trend (Chart.js via CDN), insulin/carbohydrate markers, medication
+  adherence and the current biometric profile (weight, body fat, heart
+  rate, resting heart rate) for a date range (default: last 30 days),
+  HTMX-refreshed without a full page reload, with a distinct empty state
+  for "nothing ingested yet" versus an ordinary empty range; verified
+  end-to-end in a Podman container against all real data loaded so far
+  (7,605 glucose points, all 466 medication doses, all 4 biometric cards
+  with exact real values)
 - fix: point the test suite at a dedicated celia_test database instead of
   the dev/container database, and refuse to run at all if DATABASE_URL
   doesn't look like a test database — a local pytest run had wiped all

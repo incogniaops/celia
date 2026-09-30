@@ -1,0 +1,81 @@
+<form
+  class="date-range"
+  hx-get="/dashboard"
+  hx-target="#dashboard-content"
+  hx-push-url="true"
+>
+  <label>From <input type="date" name="start" value="{{ start }}"></label>
+  <label>To <input type="date" name="end" value="{{ end }}"></label>
+  <button type="submit">Update</button>
+</form>
+
+<section class="biometric-cards">
+  {% for metric_type, metric in biometric_profile.items() %}
+  <div class="biometric-card">
+    <strong>{{ metric_type.replace("_", " ") }}</strong><br>
+    {{ "%.1f"|format(metric.value) if metric.value is not none else "—" }} {{ metric.unit or "" }}<br>
+    <small>{{ metric.recorded_at.date().isoformat() }}</small>
+  </div>
+  {% else %}
+  <p>No biometric data yet — connect Google Health to see weight, body fat and heart rate here.</p>
+  {% endfor %}
+</section>
+
+<canvas id="glucose-chart" height="100"></canvas>
+<script>
+  (function () {
+    const points = {{ glucose_points|tojson }};
+    const ctx = document.getElementById("glucose-chart");
+    if (window.celiaGlucoseChart) {
+      window.celiaGlucoseChart.destroy();
+    }
+    window.celiaGlucoseChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: points.map((p) => p.timestamp),
+        datasets: [{
+          label: "Glucose (mg/dL)",
+          data: points.map((p) => p.value),
+          borderColor: "#2563eb",
+          pointRadius: 0,
+          tension: 0.1,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { display: false } },
+      },
+    });
+  })();
+</script>
+
+<h2>Insulin &amp; carbohydrates</h2>
+{% if markers %}
+<ul>
+  {% for marker in markers %}
+  <li>
+    {{ marker.device_timestamp.isoformat() }} —
+    {% if marker.rapid_acting_insulin_units %}rapid-acting insulin: {{ marker.rapid_acting_insulin_units }}u{% endif %}
+    {% if marker.long_acting_insulin_units %}long-acting insulin: {{ marker.long_acting_insulin_units }}u{% endif %}
+    {% if marker.carbohydrates_grams %}carbohydrates: {{ marker.carbohydrates_grams }}g{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No insulin or carbohydrate entries in this range.</p>
+{% endif %}
+
+<h2>Medication</h2>
+{% if medications %}
+<ul>
+  {% for dose in medications %}
+  <li>
+    {{ dose.actual_date.isoformat() }} — {{ dose.name }}: {{ dose.status }}
+    {% if dose.note %}({{ dose.note }}){% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No medication doses in this range.</p>
+{% endif %}
