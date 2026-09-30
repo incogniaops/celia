@@ -12,7 +12,7 @@ from app.database import get_session_factory  # noqa: E402 -- import after setti
 def db_session():
     session_factory = get_session_factory()
     session = session_factory()
-    session.execute(text("TRUNCATE TABLE glucose_readings RESTART IDENTITY"))
+    session.execute(text("TRUNCATE TABLE glucose_readings, medication_doses RESTART IDENTITY"))
     session.commit()
     try:
         yield session

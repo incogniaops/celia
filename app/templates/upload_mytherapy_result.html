@@ -1,0 +1,20 @@
+<p>
+  Processed {{ processed }} medication dose{{ "s" if processed != 1 else "" }}
+  out of {{ total_parsed }} parsed.
+</p>
+{% if discarded_row_count %}
+<p>
+  Ignored {{ discarded_row_count }} activity/measurement row{{ "s" if discarded_row_count != 1 else "" }}
+  (not yet supported — see health-metrics-sync).
+</p>
+{% endif %}
+{% if skipped_row_count %}
+<p>
+  Skipped {{ skipped_row_count }} malformed row{{ "s" if skipped_row_count != 1 else "" }}:
+</p>
+<ul>
+  {% for reason in skipped_reasons %}
+  <li>{{ reason }}</li>
+  {% endfor %}
+</ul>
+{% endif %}

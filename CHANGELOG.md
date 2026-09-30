@@ -2,6 +2,14 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: implement medication-ingestion — MyTherapy CSV/PDF parser and
+  upload endpoint storing medication doses in Postgres, upserting on
+  (actual_date, type, name) so a re-uploaded export corrects a changed
+  status instead of duplicating or ignoring it; deduplicates same-key
+  rows within one upload first, after the real export's 3 same-second
+  duplicate log entries hit Postgres's "cannot affect row a second time"
+  restriction on ON CONFLICT DO UPDATE; verified end-to-end against the
+  real ~470-row sample export (466 unique doses) in a Podman container
 - feat: implement glucose-ingestion — FastAPI upload endpoint and LibreView
   CSV/PDF parser storing glucose readings in Postgres, with a
   (device_timestamp, record_type) deduplication key and batched inserts to

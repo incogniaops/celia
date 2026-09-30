@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>celia — Upload MyTherapy export</title>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+</head>
+<body>
+  <main>
+    <h1>Upload a MyTherapy export</h1>
+    <p>Upload a MyTherapy CSV archive (preferred) or a monthly PDF report.</p>
+    <form
+      hx-post="/uploads/mytherapy"
+      hx-target="#upload-result"
+      hx-encoding="multipart/form-data"
+    >
+      <input type="file" name="file" accept=".csv,.pdf" required>
+      <button type="submit">Upload</button>
+    </form>
+    <div id="upload-result"></div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,10 @@
+actual_date,scheduled_date,type,name,value,unit,status,note
+2026-07-19 04:00:00,,activity,Pasos,295.00,-,confirmed,
+2026-08-18 08:00:00,2026-08-18 08:00:00,drug,Losartán tabletas,1.00,comprimido(s),confirmed,
+2026-08-18 08:00:00,2026-08-18 08:00:00,drug,Metformina tabletas,1.00,comprimido(s),confirmed,
+2026-08-18 20:00:00,2026-08-18 20:00:00,drug,"Ketoprofeno, paracetamol tabletas",1.00,comprimido(s),confirmed,
+2026-08-18 22:09:02,,measurement,Peso,112.90,kg,confirmed,
+2026-09-08 20:00:00,2026-09-08 20:00:00,drug,"Ketoprofeno, paracetamol tabletas",1.00,comprimido(s),rejected,Cambio de medicamento
+2026-09-09 20:00:00,2026-09-09 20:00:00,drug,Linagliptin tabletas,1.00,comprimido(s),rejected,Agotado
+THIS IS AN INTENTIONALLY MALFORMED ROW,drug
+2026-09-10 20:00:00,2026-09-10 20:00:00,drug,Linagliptin tabletas,1.00,comprimido(s),rejected,Agotado
