@@ -10,7 +10,7 @@ from app.dashboard_data import (
     get_current_biometric_profile,
     get_glucose_trend,
     get_insulin_carb_markers,
-    get_medication_doses_in_range,
+    get_medication_adherence_calendar,
     has_any_data,
 )
 from app.database import get_db
@@ -59,12 +59,17 @@ def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
         for reading in glucose_trend
     ]
 
+    medication_calendar_days, medication_calendar_rows = get_medication_adherence_calendar(
+        db, start_dt, end_dt
+    )
+
     return {
         "start": start_dt.date().isoformat(),
         "end": end_dt.date().isoformat(),
         "glucose_points": glucose_points,
         "markers": get_insulin_carb_markers(db, start_dt, end_dt),
-        "medications": get_medication_doses_in_range(db, start_dt, end_dt),
+        "medication_calendar_days": medication_calendar_days,
+        "medication_calendar_rows": medication_calendar_rows,
         "biometric_profile": get_current_biometric_profile(db),
     }
 

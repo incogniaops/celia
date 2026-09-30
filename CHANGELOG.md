@@ -2,6 +2,14 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: replace the dashboard's flat medication list with a
+  medication-adherence calendar (one row per medication, one column per day
+  in the selected range), inspired by MyTherapy's own monthly PDF report;
+  same-day multi-dose medications are consolidated to a single status per
+  day, with any rejected dose that day marking the whole day as not
+  adhered; verified end-to-end in a Podman container against the real 466
+  medication doses, including a genuine rejected stretch (Linagliptin,
+  2026-09-09 to 2026-09-13)
 - feat: implement dashboard — one GET /dashboard page showing the glucose
   trend (Chart.js via CDN), insulin/carbohydrate markers, medication
   adherence and the current biometric profile (weight, body fat, heart

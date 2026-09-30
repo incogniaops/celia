@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from app.dashboard_data import (
     get_current_biometric_profile,
     get_glucose_trend,
     get_insulin_carb_markers,
+    get_medication_adherence_calendar,
     get_medication_doses_in_range,
     has_any_data,
 )
@@ -70,6 +71,68 @@ def test_get_medication_doses_in_range_orders_by_date_descending(db_session):
     doses = get_medication_doses_in_range(db_session, _START, _END)
 
     assert [d.name for d in doses] == ["B", "A"]
+
+
+def test_medication_adherence_calendar_all_confirmed_doses_same_day_shown_confirmed(db_session):
+    db_session.add_all(
+        [
+            MedicationDose(
+                actual_date=datetime(2026, 8, 5, 8), type="drug", name="A", status="confirmed"
+            ),
+            MedicationDose(
+                actual_date=datetime(2026, 8, 5, 20), type="drug", name="A", status="confirmed"
+            ),
+        ]
+    )
+    db_session.commit()
+
+    days, rows = get_medication_adherence_calendar(db_session, _START, _END)
+
+    assert days[4] == date(2026, 8, 5)
+    row_a = next(r for r in rows if r["name"] == "A")
+    assert row_a["cells"][4] == "confirmed"
+
+
+def test_medication_adherence_calendar_any_rejected_dose_same_day_wins(db_session):
+    db_session.add_all(
+        [
+            MedicationDose(
+                actual_date=datetime(2026, 8, 5, 8), type="drug", name="A", status="confirmed"
+            ),
+            MedicationDose(
+                actual_date=datetime(2026, 8, 5, 20), type="drug", name="A", status="rejected"
+            ),
+        ]
+    )
+    db_session.commit()
+
+    _days, rows = get_medication_adherence_calendar(db_session, _START, _END)
+
+    row_a = next(r for r in rows if r["name"] == "A")
+    assert row_a["cells"][4] == "rejected"
+
+
+def test_medication_adherence_calendar_day_with_no_dose_is_none(db_session):
+    db_session.add(
+        MedicationDose(actual_date=datetime(2026, 8, 5), type="drug", name="A", status="confirmed")
+    )
+    db_session.commit()
+
+    _days, rows = get_medication_adherence_calendar(db_session, _START, _END)
+
+    row_a = next(r for r in rows if r["name"] == "A")
+    assert row_a["cells"][9] is None  # Aug 10 -- no dose recorded that day
+
+
+def test_medication_adherence_calendar_excludes_medication_with_doses_only_outside_range(db_session):
+    db_session.add(
+        MedicationDose(actual_date=datetime(2026, 7, 1), type="drug", name="OutOfRange", status="confirmed")
+    )
+    db_session.commit()
+
+    _days, rows = get_medication_adherence_calendar(db_session, _START, _END)
+
+    assert all(r["name"] != "OutOfRange" for r in rows)
 
 
 def test_get_current_biometric_profile_returns_most_recent_per_type_and_ignores_steps_sleep(db_session):

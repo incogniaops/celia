@@ -1,27 +1,26 @@
-<form
-  class="date-range"
-  hx-get="/dashboard"
-  hx-target="#dashboard-content"
-  hx-push-url="true"
->
-  <label>From <input type="date" name="start" value="{{ start }}"></label>
-  <label>To <input type="date" name="end" value="{{ end }}"></label>
-  <button type="submit">Update</button>
+<form hx-get="/dashboard" hx-target="#dashboard-content" hx-push-url="true">
+  <fieldset role="group">
+    <input type="date" name="start" value="{{ start }}" aria-label="From">
+    <input type="date" name="end" value="{{ end }}" aria-label="To">
+    <button type="submit">Update</button>
+  </fieldset>
 </form>
 
 <section class="biometric-cards">
   {% for metric_type, metric in biometric_profile.items() %}
-  <div class="biometric-card">
-    <strong>{{ metric_type.replace("_", " ") }}</strong><br>
-    {{ "%.1f"|format(metric.value) if metric.value is not none else "—" }} {{ metric.unit or "" }}<br>
+  <article>
+    <header>{{ metric_type.replace("_", " ")|title }}</header>
+    <div class="value">{{ "%.1f"|format(metric.value) if metric.value is not none else "—" }} {{ metric.unit or "" }}</div>
     <small>{{ metric.recorded_at.date().isoformat() }}</small>
-  </div>
+  </article>
   {% else %}
-  <p>No biometric data yet — connect Google Health to see weight, body fat and heart rate here.</p>
+  <p>No biometric data yet — <a href="/auth/google/login">connect Google Health</a> to see weight, body fat and heart rate here.</p>
   {% endfor %}
 </section>
 
-<canvas id="glucose-chart" height="100"></canvas>
+<div class="chart-wrap">
+  <canvas id="glucose-chart"></canvas>
+</div>
 <script>
   (function () {
     const points = {{ glucose_points|tojson }};
@@ -50,32 +49,53 @@
   })();
 </script>
 
-<h2>Insulin &amp; carbohydrates</h2>
-{% if markers %}
-<ul>
-  {% for marker in markers %}
-  <li>
-    {{ marker.device_timestamp.isoformat() }} —
-    {% if marker.rapid_acting_insulin_units %}rapid-acting insulin: {{ marker.rapid_acting_insulin_units }}u{% endif %}
-    {% if marker.long_acting_insulin_units %}long-acting insulin: {{ marker.long_acting_insulin_units }}u{% endif %}
-    {% if marker.carbohydrates_grams %}carbohydrates: {{ marker.carbohydrates_grams }}g{% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>No insulin or carbohydrate entries in this range.</p>
-{% endif %}
+<article>
+  <header>Insulin &amp; carbohydrates</header>
+  {% if markers %}
+  <ul>
+    {% for marker in markers %}
+    <li>
+      {{ marker.device_timestamp.isoformat() }} —
+      {% if marker.rapid_acting_insulin_units %}rapid-acting insulin: {{ marker.rapid_acting_insulin_units }}u{% endif %}
+      {% if marker.long_acting_insulin_units %}long-acting insulin: {{ marker.long_acting_insulin_units }}u{% endif %}
+      {% if marker.carbohydrates_grams %}carbohydrates: {{ marker.carbohydrates_grams }}g{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No insulin or carbohydrate entries in this range.</p>
+  {% endif %}
+</article>
 
-<h2>Medication</h2>
-{% if medications %}
-<ul>
-  {% for dose in medications %}
-  <li>
-    {{ dose.actual_date.isoformat() }} — {{ dose.name }}: {{ dose.status }}
-    {% if dose.note %}({{ dose.note }}){% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>No medication doses in this range.</p>
-{% endif %}
+<article>
+  <header>Medication adherence</header>
+  {% if medication_calendar_rows %}
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Medication</th>
+          {% for day in medication_calendar_days %}
+          <th scope="col">{{ day.day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in medication_calendar_rows %}
+        <tr>
+          <th scope="row">{{ row.name }}</th>
+          {% for cell in row.cells %}
+          <td>
+            {% if cell == "confirmed" %}✅{% elif cell == "rejected" %}❌{% else %}—{% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <small>✅ confirmed &nbsp; ❌ rejected &nbsp; — no dose scheduled that day</small>
+  {% else %}
+  <p>No medication doses in this range.</p>
+  {% endif %}
+</article>

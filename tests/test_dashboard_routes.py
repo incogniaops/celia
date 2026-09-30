@@ -61,6 +61,16 @@ def test_dashboard_renders_with_real_data(client, db_session):
     assert "glucose-chart" in response.text
 
 
+def test_dashboard_shows_adherence_calendar_with_confirmed_status(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "Medication adherence" in response.text
+    assert "✅" in response.text
+
+
 def test_dashboard_range_filters_data(client, db_session):
     _seed(db_session)
 

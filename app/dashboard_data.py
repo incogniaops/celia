@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -50,6 +50,48 @@ def get_medication_doses_in_range(db: Session, start: datetime, end: datetime) -
         .order_by(MedicationDose.actual_date.desc())
     )
     return list(db.execute(stmt).scalars().all())
+
+
+def get_medication_adherence_calendar(
+    db: Session, start: datetime, end: datetime
+) -> tuple[list[date], list[dict]]:
+    """Medication-adherence calendar for the range: one row per medication
+    name, one status per day (see design.md).
+
+    Multiple doses for the same medication on the same day are consolidated
+    to a single status -- if any of that day's doses was `rejected`, the
+    whole day is `rejected`; only an all-`confirmed` day is `confirmed`.
+    This deliberately surfaces a missed dose rather than hiding it behind an
+    otherwise-adhered day.
+    """
+    doses = get_medication_doses_in_range(db, start, end)
+
+    statuses_by_name_day: dict[str, dict[date, set[str]]] = {}
+    for dose in doses:
+        day = dose.actual_date.date()
+        statuses_by_name_day.setdefault(dose.name, {}).setdefault(day, set()).add(dose.status)
+
+    days = []
+    day = start.date()
+    while day <= end.date():
+        days.append(day)
+        day += timedelta(days=1)
+
+    rows = []
+    for name in sorted(statuses_by_name_day):
+        day_statuses = statuses_by_name_day[name]
+        cells = []
+        for day in days:
+            statuses = day_statuses.get(day)
+            if statuses is None:
+                cells.append(None)
+            elif "rejected" in statuses:
+                cells.append("rejected")
+            else:
+                cells.append("confirmed")
+        rows.append({"name": name, "cells": cells})
+
+    return days, rows
 
 
 def get_current_biometric_profile(db: Session) -> dict[str, HealthMetric]:

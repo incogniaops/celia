@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>celia — Dashboard</title>
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <style>
-    body { margin: 0 auto; max-width: 900px; padding: 1rem; font-family: sans-serif; }
-    canvas { width: 100% !important; max-width: 100%; }
-    .biometric-cards { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-    .biometric-card { border: 1px solid #ccc; border-radius: 0.5rem; padding: 0.75rem 1rem; min-width: 8rem; }
-    form.date-range { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+    .chart-wrap { position: relative; height: 320px; margin-bottom: 1.5rem; }
+    .biometric-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .biometric-cards article { margin: 0; text-align: center; }
+    .biometric-cards .value { font-size: 1.5rem; font-weight: 600; }
+    .biometric-cards small { color: var(--pico-muted-color); }
   </style>
 </head>
 <body>
-  <h1>celia dashboard</h1>
-  <div id="dashboard-content">
-    {% include "dashboard_content.html" %}
-  </div>
+  <main class="container">
+    <h1>celia</h1>
+    <div id="dashboard-content">
+      {% include "dashboard_content.html" %}
+    </div>
+  </main>
 </body>
 </html>
