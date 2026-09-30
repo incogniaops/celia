@@ -1,0 +1,11 @@
+# Personal health data — never committed. See docs/PS-CELIA-001, Q-05.
+data/
+
+# Credentials and secrets (e.g. Google Health API OAuth client JSON) — never committed.
+.secrets/
+
+# OS
+.DS_Store
+
+# Editors / tooling
+.claude/settings.local.json

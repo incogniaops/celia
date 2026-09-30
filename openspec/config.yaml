@@ -1,0 +1,55 @@
+schema: spec-driven
+
+context: |
+  celia is a self-hosted diabetes dashboard (single user, homelab deployment).
+  Full business context, assumptions, business rules and open decisions live in
+  docs/PS-CELIA-001-Self-Hosted-Diabetes-Dashboard.md — treat it as the
+  authoritative product spec; the capability specs under openspec/specs/ are
+  derived from it and cite back to their source user story (US-01..US-06).
+  Tech stack: Python, FastAPI, SQLAlchemy + Alembic, Jinja2 + HTMX, Postgres.
+  Containerised from the start with Podman locally (macOS) and Podman/Docker
+  on a homelab VM; OCI-compliant images only, no runtime-specific features
+  (a future iteration may move to Kubernetes on Talos Linux with containerd).
+  Style: UK English spelling throughout; accent Spanish proper nouns (México,
+  Álvarez) even in English text.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
+
+operations:
+  apply:
+    guidance:
+      - After implementing a change's tasks, before considering the change done, invoke the `changelogger` skill to add a CHANGELOG.md entry for what was implemented (default CST date, corporate/English-UK style per this project's language policy).
+      - Never commit directly with ad-hoc `git commit` calls in this repo. Once CHANGELOG.md is updated, invoke the `commit` skill to stage, build the commit message, and commit — it already gates on CHANGELOG.md having a diff.
+  archive:
+    guidance:
+      - Do not archive a change that has uncommitted implementation work. If CHANGELOG.md and the code changes are not yet committed, run the `changelogger` skill (if not already done) and then the `commit` skill before archiving.
+      - Archiving itself (moving the change to openspec/archive/ and updating main specs) should also be committed via the `commit` skill, with its own CHANGELOG.md entry via `changelogger` if the archive step changes any specs under openspec/specs/.
