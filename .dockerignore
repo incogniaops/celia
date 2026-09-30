@@ -1,0 +1,9 @@
+.git
+.venv
+data
+.secrets
+tests
+docs
+openspec
+*.md
+.env

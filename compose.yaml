@@ -1,0 +1,31 @@
+# Local dev only. On a network behind a TLS-inspecting corporate proxy,
+# build the app image directly first with a build secret (see Containerfile),
+# then `compose up` to reuse it:
+#   podman build -t celia:dev -f Containerfile --secret id=corp_ca_cert,src=/path/to/ca.pem .
+#   podman compose up
+services:
+  db:
+    image: docker.io/library/postgres:16.4-alpine
+    environment:
+      POSTGRES_USER: celia
+      POSTGRES_PASSWORD: celia
+      POSTGRES_DB: celia
+    volumes:
+      - celia-db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: celia:dev
+    environment:
+      DATABASE_URL: postgresql+psycopg://celia:celia@db:5432/celia
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  celia-db-data:

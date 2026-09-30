@@ -1,0 +1,10 @@
+Datos de glucosa,Generado el,01-10-2026 09:00 UTC,Generado por,Test User
+Dispositivo,Número de serie,Marca de hora del dispositivo,Tipo de registro,Historial de glucosa mg/dL,Escanear glucosa mg/dL,Insulina de acción rápida no numérica,Insulina de acción rápida (unidades),Alimento no numérico,Carbohidratos (gramos),Carbohidratos (porciones),Insulina de acción prolongada no numérica,Insulina de acción prolongada (unidades),Notas,Banda de glucosa mg/dL,Cetona mmol/L,Insulina para la hora de la comida (unidades),Insulina de corrección (unidades),Insulina de cambio de usuario (unidades),Cetona histórica mmol/L,Escanear cetona mmol/L
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,01-08-2026 00:05,0,240,,,,,,,,,,,,,,,,
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,01-08-2026 00:20,0,233,,,,,,,,,,,,,,,,
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,01-08-2026 00:03,1,,260,,,,,,,,,,,,,,,
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,01-08-2026 00:03,5,,,,,1,,,,,,,,,,,,
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,31-07-2026 23:03,6,,,,,,,,,,,,,,,,,
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,01-08-2026 08:00,0,150,,,3.0,,45,,,1.0,,,,,,,,
+THIS IS AN INTENTIONALLY MALFORMED ROW WITH TOO FEW FIELDS,0
+FreeStyle LibreLink,ed42ee96-04c5-4374-ad39-15c2877fe3e7,01-08-2026 08:15,0,155,,,,,,,,,,,,,,,,

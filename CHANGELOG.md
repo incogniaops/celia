@@ -2,6 +2,12 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: implement glucose-ingestion — FastAPI upload endpoint and LibreView
+  CSV/PDF parser storing glucose readings in Postgres, with a
+  (device_timestamp, record_type) deduplication key and batched inserts to
+  stay under Postgres's 65535-parameter-per-query limit on large exports;
+  verified end-to-end against the real ~9,000-row sample export in a
+  Podman container
 - chore: require the changelogger and commit skills within OpenSpec's apply and archive operations guidance, so no change is applied or archived without a CHANGELOG.md entry and a proper commit
 - feat: confirm Google Health API integration for weight, body fat, heart rate, resting heart rate, steps and sleep, sourced from a Wyze scale and a Xiaomi smartband via Health Connect
 - feat: confirm MyTherapy CSV export as the preferred medication-adherence source, with the monthly PDF report as fallback

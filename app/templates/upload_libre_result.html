@@ -1,0 +1,15 @@
+<p>
+  Stored {{ inserted }} new reading{{ "s" if inserted != 1 else "" }}
+  out of {{ total_parsed }} parsed
+  ({{ total_parsed - inserted }} already present).
+</p>
+{% if skipped_row_count %}
+<p>
+  Skipped {{ skipped_row_count }} malformed row{{ "s" if skipped_row_count != 1 else "" }}:
+</p>
+<ul>
+  {% for reason in skipped_reasons %}
+  <li>{{ reason }}</li>
+  {% endfor %}
+</ul>
+{% endif %}

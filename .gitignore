@@ -9,3 +9,13 @@ data/
 
 # Editors / tooling
 .claude/settings.local.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Local environment config (real secrets go here, not in .env.example)
+.env
+
