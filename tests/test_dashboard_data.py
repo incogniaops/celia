@@ -1,11 +1,14 @@
 from datetime import date, datetime
 
 from app.dashboard_data import (
+    get_agp_percentile_bands,
     get_current_biometric_profile,
+    get_glucose_summary_stats,
     get_glucose_trend,
     get_insulin_carb_markers,
     get_medication_adherence_calendar,
     get_medication_doses_in_range,
+    get_monthly_glucose_calendar,
     has_any_data,
 )
 from app.models import GlucoseReading, HealthMetric, MedicationDose
@@ -133,6 +136,114 @@ def test_medication_adherence_calendar_excludes_medication_with_doses_only_outsi
     _days, rows = get_medication_adherence_calendar(db_session, _START, _END)
 
     assert all(r["name"] != "OutOfRange" for r in rows)
+
+
+def test_glucose_summary_stats_is_none_when_no_readings(db_session):
+    assert get_glucose_summary_stats(db_session, _START, _END) is None
+
+
+def test_glucose_summary_stats_bands_at_boundary_values(db_session):
+    db_session.add_all(
+        [
+            _glucose_reading(datetime(2026, 8, 5, 0), 0, historic_glucose_mgdl=53),  # very_low
+            _glucose_reading(datetime(2026, 8, 5, 1), 0, historic_glucose_mgdl=54),  # low
+            _glucose_reading(datetime(2026, 8, 5, 2), 0, historic_glucose_mgdl=69),  # low
+            _glucose_reading(datetime(2026, 8, 5, 3), 0, historic_glucose_mgdl=70),  # in_range
+            _glucose_reading(datetime(2026, 8, 5, 4), 0, historic_glucose_mgdl=180),  # in_range
+            _glucose_reading(datetime(2026, 8, 5, 5), 0, historic_glucose_mgdl=181),  # high
+            _glucose_reading(datetime(2026, 8, 5, 6), 0, historic_glucose_mgdl=250),  # high
+            _glucose_reading(datetime(2026, 8, 5, 7), 0, historic_glucose_mgdl=251),  # very_high
+        ]
+    )
+    db_session.commit()
+
+    stats = get_glucose_summary_stats(db_session, _START, _END)
+
+    counts = {band: round(pct / 100 * 8) for band, pct in stats["band_percentages"].items()}
+    assert counts == {"very_low": 1, "low": 2, "in_range": 2, "high": 2, "very_high": 1}
+
+
+def test_glucose_summary_stats_gmi_matches_libreview_worked_example(db_session):
+    db_session.add_all(
+        [
+            _glucose_reading(datetime(2026, 8, 5, 0), 0, historic_glucose_mgdl=112),
+            _glucose_reading(datetime(2026, 8, 5, 1), 0, historic_glucose_mgdl=112),
+        ]
+    )
+    db_session.commit()
+
+    stats = get_glucose_summary_stats(db_session, _START, _END)
+
+    assert stats["average_mgdl"] == 112
+    assert round(stats["gmi_percent"], 1) == 6.0
+
+
+def test_glucose_summary_stats_cv_percent(db_session):
+    db_session.add_all(
+        [
+            _glucose_reading(datetime(2026, 8, 5, 0), 0, historic_glucose_mgdl=100),
+            _glucose_reading(datetime(2026, 8, 5, 1), 0, historic_glucose_mgdl=120),
+        ]
+    )
+    db_session.commit()
+
+    stats = get_glucose_summary_stats(db_session, _START, _END)
+
+    assert round(stats["cv_percent"], 2) == 12.86
+
+
+def test_agp_percentile_bands_none_when_fewer_than_two_days(db_session):
+    db_session.add_all(
+        [
+            _glucose_reading(datetime(2026, 8, 5, 8), 0, historic_glucose_mgdl=100),
+            _glucose_reading(datetime(2026, 8, 5, 9), 0, historic_glucose_mgdl=110),
+        ]
+    )
+    db_session.commit()
+
+    assert get_agp_percentile_bands(db_session, _START, _END) is None
+
+
+def test_agp_percentile_bands_computes_percentiles_and_skips_sparse_buckets(db_session):
+    db_session.add_all(
+        [
+            _glucose_reading(datetime(2026, 8, 5, 8, 0), 0, historic_glucose_mgdl=100),
+            _glucose_reading(datetime(2026, 8, 6, 8, 0), 0, historic_glucose_mgdl=120),
+            _glucose_reading(datetime(2026, 8, 7, 8, 0), 0, historic_glucose_mgdl=140),
+            _glucose_reading(datetime(2026, 8, 5, 9, 0), 0, historic_glucose_mgdl=200),
+        ]
+    )
+    db_session.commit()
+
+    bands = get_agp_percentile_bands(db_session, _START, _END)
+
+    assert len(bands) == 96
+    by_minute = {b["minute_of_day"]: b for b in bands}
+    assert by_minute[8 * 60]["median"] == 120
+    assert by_minute[8 * 60]["p5"] is not None
+    assert by_minute[9 * 60]["median"] is None  # only one value that time of day
+
+
+def test_monthly_glucose_calendar_week_alignment_and_empty_cells(db_session):
+    start = datetime(2026, 8, 3)
+    end = datetime(2026, 8, 5)
+    db_session.add(_glucose_reading(datetime(2026, 8, 3, 8), 0, historic_glucose_mgdl=100))
+    db_session.commit()
+
+    weeks = get_monthly_glucose_calendar(db_session, start, end)
+
+    assert all(len(week) == 7 for week in weeks)
+    for week in weeks:
+        for column, slot in enumerate(week):
+            if slot is not None:
+                assert slot["date"].weekday() == column  # column 0 = Monday ... 6 = Sunday
+
+    by_date = {slot["date"]: slot for week in weeks for slot in week if slot is not None}
+    assert set(by_date) == {date(2026, 8, 3), date(2026, 8, 4), date(2026, 8, 5)}
+    assert by_date[date(2026, 8, 3)]["average_mgdl"] == 100
+    assert by_date[date(2026, 8, 3)]["band"] == "in_range"
+    assert by_date[date(2026, 8, 4)]["average_mgdl"] is None
+    assert by_date[date(2026, 8, 4)]["band"] is None
 
 
 def test_get_current_biometric_profile_returns_most_recent_per_type_and_ignores_steps_sleep(db_session):

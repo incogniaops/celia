@@ -7,10 +7,14 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.dashboard_data import (
+    get_agp_percentile_bands,
     get_current_biometric_profile,
+    get_glucose_summary_stats,
     get_glucose_trend,
     get_insulin_carb_markers,
     get_medication_adherence_calendar,
+    get_monthly_glucose_calendar,
+    glucose_value,
     has_any_data,
 )
 from app.database import get_db
@@ -48,14 +52,7 @@ def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
 
     glucose_trend = get_glucose_trend(db, start_dt, end_dt)
     glucose_points = [
-        {
-            "timestamp": reading.device_timestamp.isoformat(),
-            "value": float(
-                reading.historic_glucose_mgdl
-                if reading.historic_glucose_mgdl is not None
-                else reading.scan_glucose_mgdl
-            ),
-        }
+        {"timestamp": reading.device_timestamp.isoformat(), "value": glucose_value(reading)}
         for reading in glucose_trend
     ]
 
@@ -71,6 +68,9 @@ def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
         "medication_calendar_days": medication_calendar_days,
         "medication_calendar_rows": medication_calendar_rows,
         "biometric_profile": get_current_biometric_profile(db),
+        "glucose_summary": get_glucose_summary_stats(db, start_dt, end_dt),
+        "agp_bands": get_agp_percentile_bands(db, start_dt, end_dt),
+        "glucose_calendar_weeks": get_monthly_glucose_calendar(db, start_dt, end_dt),
     }
 
 

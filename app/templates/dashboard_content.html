@@ -18,6 +18,28 @@
   {% endfor %}
 </section>
 
+<article>
+  <header>Time in range</header>
+  {% if glucose_summary %}
+  <table>
+    <tbody>
+      <tr><th scope="row" style="background-color:#fecaca;">Very low (&lt;54 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_low) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fed7aa;">Low (54-69 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.low) }}%</td></tr>
+      <tr><th scope="row">In range (70-180 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.in_range) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fed7aa;">High (181-250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.high) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fecaca;">Very high (&gt;250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_high) }}%</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Average: <strong>{{ "%.0f"|format(glucose_summary.average_mgdl) }} mg/dL</strong> &nbsp;
+    GMI: <strong>{{ "%.1f"|format(glucose_summary.gmi_percent) }}%</strong> &nbsp;
+    CV: <strong>{{ "%.1f"|format(glucose_summary.cv_percent) }}%</strong>
+  </p>
+  {% else %}
+  <p>No glucose readings in this range.</p>
+  {% endif %}
+</article>
+
 <div class="chart-wrap">
   <canvas id="glucose-chart"></canvas>
 </div>
@@ -48,6 +70,49 @@
     });
   })();
 </script>
+
+<article>
+  <header>Ambulatory glucose profile (AGP)</header>
+  {% if agp_bands %}
+  <div class="chart-wrap">
+    <canvas id="agp-chart"></canvas>
+  </div>
+  <script>
+    (function () {
+      const bands = {{ agp_bands|tojson }};
+      const ctx = document.getElementById("agp-chart");
+      if (window.celiaAgpChart) {
+        window.celiaAgpChart.destroy();
+      }
+      const labels = bands.map((b) => {
+        const h = String(Math.floor(b.minute_of_day / 60)).padStart(2, "0");
+        const m = String(b.minute_of_day % 60).padStart(2, "0");
+        return `${h}:${m}`;
+      });
+      window.celiaAgpChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            { label: "p95", data: bands.map((b) => b.p95), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.15)", pointRadius: 0, fill: "+1" },
+            { label: "p75", data: bands.map((b) => b.p75), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.35)", pointRadius: 0, fill: "+1" },
+            { label: "Median", data: bands.map((b) => b.median), borderColor: "#2563eb", pointRadius: 0, fill: false },
+            { label: "p25", data: bands.map((b) => b.p25), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.35)", pointRadius: 0, fill: "-1" },
+            { label: "p5", data: bands.map((b) => b.p5), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.15)", pointRadius: 0, fill: "-1" },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { x: { ticks: { maxTicksLimit: 12 } } },
+        },
+      });
+    })();
+  </script>
+  {% else %}
+  <p>Need at least two days of glucose readings in this range to show a pattern.</p>
+  {% endif %}
+</article>
 
 <article>
   <header>Insulin &amp; carbohydrates</header>
@@ -98,4 +163,43 @@
   {% else %}
   <p>No medication doses in this range.</p>
   {% endif %}
+</article>
+
+<article>
+  <header>Monthly glucose calendar</header>
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Mon</th>
+          <th scope="col">Tue</th>
+          <th scope="col">Wed</th>
+          <th scope="col">Thu</th>
+          <th scope="col">Fri</th>
+          <th scope="col">Sat</th>
+          <th scope="col">Sun</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in glucose_calendar_weeks %}
+        <tr>
+          {% for cell in week %}
+          {% if cell is none %}
+          <td></td>
+          {% elif cell.band in ("very_low", "very_high") %}
+          <td style="background-color:#fecaca;"><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
+          {% elif cell.band in ("low", "high") %}
+          <td style="background-color:#fed7aa;"><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
+          {% elif cell.band == "in_range" %}
+          <td><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
+          {% else %}
+          <td><strong>{{ cell.date.day }}</strong><br>—</td>
+          {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <small>Red: very low/very high average &nbsp; Amber: low/high average &nbsp; Plain: in range or no data that day</small>
 </article>

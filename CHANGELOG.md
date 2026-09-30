@@ -2,6 +2,15 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: add three glucose pattern views to the dashboard, inspired by the
+  user's own LibreView AGP report — a time-in-range/GMI/%CV summary using
+  the standard AGP consensus bands, an AGP percentile-band chart
+  overlaying every day in the range onto one 24-hour axis, and a monthly
+  glucose calendar (week rows, weekday columns) — all using Python's
+  standard library only (no new dependency); verified end-to-end in a
+  Podman container against the exact LibreView report period
+  (17-30 September 2026), matching its GMI exactly (6.0%) and its
+  time-in-range and per-day averages within 1-2 mg/dL
 - feat: replace the dashboard's flat medication list with a
   medication-adherence calendar (one row per medication, one column per day
   in the selected range), inspired by MyTherapy's own monthly PDF report;
