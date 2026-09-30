@@ -59,3 +59,43 @@ class GlucoseReading(Base):
 
     source: Mapped[str] = mapped_column(String, nullable=False, default="libreview_csv")
     raw_row: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+
+class GoogleHealthCredential(Base):
+    """A single row (single-user MVP) holding the app's own Google OAuth
+    tokens, so a sync can refresh its access token without a human
+    repeating the authorisation flow each time.
+    """
+
+    __tablename__ = "google_health_credentials"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    access_token: Mapped[str] = mapped_column(String, nullable=False)
+    refresh_token: Mapped[str] = mapped_column(String, nullable=False)
+    access_token_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
+    last_sync_status: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_sync_error: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class HealthMetric(Base):
+    """A single data point synced from the Google Health API.
+
+    Uniqueness on (metric_type, recorded_at) mirrors GlucoseReading's
+    dedup strategy (ON CONFLICT DO NOTHING, not upsert): these are Google's
+    own sensor/device readings, not user-correctable data like MyTherapy's.
+    """
+
+    __tablename__ = "health_metrics"
+    __table_args__ = (
+        UniqueConstraint("metric_type", "recorded_at", name="uq_health_metric_type_recorded_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    metric_type: Mapped[str] = mapped_column(String, nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    value: Mapped[float | None] = mapped_column(Numeric, nullable=True)
+    unit: Mapped[str | None] = mapped_column(String, nullable=True)
+    source_platform: Mapped[str | None] = mapped_column(String, nullable=True)
+    source_package: Mapped[str | None] = mapped_column(String, nullable=True)
+    raw_json: Mapped[dict] = mapped_column(JSON, nullable=False)

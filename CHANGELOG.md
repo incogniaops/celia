@@ -2,6 +2,22 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- fix: point the test suite at a dedicated celia_test database instead of
+  the dev/container database, and refuse to run at all if DATABASE_URL
+  doesn't look like a test database — a local pytest run had wiped all
+  real data (glucose readings, medication doses, a just-authorised Google
+  credential) via the db_session fixture's per-test TRUNCATE, because it
+  defaulted to the same database the running container was using
+- feat: implement health-metrics-sync — app-hosted Google OAuth
+  authorisation and refresh (GoogleHealthCredential), and a sync routine
+  for weight, body fat, heart rate, daily resting heart rate, steps and
+  sleep, normalised into one health_metrics table with (metric_type,
+  recorded_at) deduplication; fixed a real bug where a same-day re-sync
+  produced an empty/invalid date filter for daily-resting-heart-rate,
+  which Google rejected outright; verified end-to-end against the real
+  linked Google account in a Podman container (37 weight, 13 body-fat, 41
+  daily-resting-heart-rate, 5,559 steps and 53 sleep rows, matching the
+  ranges confirmed manually during the hackathon)
 - feat: implement medication-ingestion — MyTherapy CSV/PDF parser and
   upload endpoint storing medication doses in Postgres, upserting on
   (actual_date, type, name) so a re-uploaded export corrects a changed
