@@ -75,16 +75,20 @@ The system SHALL explain how to add data when none has been ingested yet.
 - **WHEN** the user opens the dashboard and no data has been ingested yet
 - **THEN** an empty state explains how to upload a Libre export, upload a MyTherapy report, or connect Google Health
 
-### Requirement: Biometric profile source precedence is currently trivial, not absent
-The system's "current biometric profile" (weight, body fat, heart rate, resting heart rate) SHALL be read from `health_metrics` (Google Health) only, since medication-ingestion deliberately does not persist MyTherapy's `activity`/`measurement` rows (including weight) — there is no second stored source to prefer over. This is BR-06 applied to the system as actually built, not BR-06 left unimplemented.
+### Requirement: Biometric profile source precedence
+The system's "current biometric profile" (weight, body fat, heart rate, resting heart rate) SHALL show the most recently recorded value in `health_metrics` for each metric type, with no explicit precedence between sources when more than one stores the same metric type -- weight, body fat and heart rate are each stored by both Google Health and the Wyze body-composition export, and the more recent reading wins regardless of which one produced it, since both represent real readings of the same physical measurement. Resting heart rate has only ever had one source (Google Health; the Wyze export's own "Heart Rate" section is a plain heart rate, not a daily resting figure). MyTherapy's weight/activity data remains the one source genuinely absent, not merely deprioritised: medication-ingestion deliberately does not persist MyTherapy's `activity`/`measurement` rows, so there is nothing from that source to compete with Google Health or Wyze.
 
-#### Scenario: Weight shown on the dashboard has one source today
+#### Scenario: Weight, body fat or heart rate is available from both Google Health and Wyze
+- **WHEN** both a Google Health-sourced and a Wyze-sourced reading exist for the same metric type (weight, body fat or heart rate)
+- **THEN** the dashboard shows whichever reading has the more recent `recorded_at`, with no preference for one source over the other
+
+#### Scenario: MyTherapy's weight/activity data remains absent, not merely deprioritised
 - **WHEN** the user views the current biometric profile
-- **THEN** the weight, body-fat, heart-rate and resting-heart-rate values shown come from `health_metrics`, because no MyTherapy weight/steps rows exist anywhere in the database to compete with them
+- **THEN** no MyTherapy-sourced value competes with Google Health or Wyze for weight, body fat, heart rate or resting heart rate, because medication-ingestion deliberately does not persist MyTherapy's `activity`/`measurement` rows
 
 #### Scenario: BR-06 becomes live if MyTherapy weight/steps are ever persisted
 - **WHEN** a future change starts persisting MyTherapy's `activity`/`measurement` rows (reversing medication-ingestion's current Non-Goal)
-- **THEN** the dashboard's biometric-profile query must be revisited to actually choose between the two sources per BR-06, rather than assuming `health_metrics` is the only one
+- **THEN** the dashboard's biometric-profile query must decide how MyTherapy's data weighs against the existing most-recent-wins rule already used between Google Health and Wyze, rather than assuming MyTherapy is still absent
 
 ### Requirement: Time-in-range and glucose-control summary
 The system SHALL show, for the selected range, the percentage of glucose readings falling in each of the five standard AGP bands (very low <54 mg/dL, low 54-69 mg/dL, in range 70-180 mg/dL, high 181-250 mg/dL, very high >250 mg/dL). The average glucose, the glucose coefficient of variation (%CV) and the Glucose Management Indicator (GMI, an estimated A1c, as a percentage with the mmol/mol equivalent on its own line below it) are each shown as their own card in the biometric-and-glucose-summary row, not repeated here. `a1c-detail-view`'s data-coverage detail (days with data out of days in range) is still computed but no longer shown on the card.

@@ -2,6 +2,17 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- docs: resolve the biometric-profile source-precedence inconsistency
+  flagged during the archive pass — confirmed against real data that
+  MyTherapy still never persists weight/activity (medication-ingestion's
+  NON_PERSISTED_TYPES is unchanged), but Wyze genuinely does store
+  weight/body-fat/heart-rate rows alongside Google Health (37/13/1 Wyze
+  rows vs 36+1/13/50 Google Health rows for those three metric types),
+  and get_current_biometric_profile has no precedence logic at all —
+  just most-recent-`recorded_at`-wins, regardless of source; rewrote
+  the dashboard's "Biometric profile source precedence" requirement to
+  state that as the actual rule, instead of the stale "health_metrics
+  (Google Health) only" claim
 - chore: archive all 12 completed OpenSpec changes (glucose-ingestion
   through biometric-cards-redesign), syncing every delta into the main
   specs under openspec/specs/ in dependency order, with an
