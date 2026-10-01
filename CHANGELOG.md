@@ -2,6 +2,20 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- docs: bring PS-CELIA-001 (v1.1 -> v1.2) back in line with what was
+  actually built, so it can be the anchor spec again — add US-07
+  (Wyze body-composition export, the fourth data source, missing
+  entirely from v1.1), rewrite US-04's acceptance criteria for the
+  dashboard's full current feature set (medication-adherence calendar,
+  time-in-range/AGP/monthly-glucose-calendar views, BMI/metabolic-age/
+  A1C cards, heart-rate cards dropped, date-range presets), correct
+  AC-02.2 and BR-06 (MyTherapy's activity/measurement rows are
+  recognised but never stored at all — v1.1 wrongly assumed they
+  competed with Google Health under a precedence rule; the real
+  precedence is Google Health vs Wyze, most-recent-wins), add A-09
+  (height/birth date as fixed environment-variable facts, not source
+  control), and update Q-05, Section 11, Section 12 and the
+  readiness/traceability sections to match
 - docs: resolve the biometric-profile source-precedence inconsistency
   flagged during the archive pass — confirmed against real data that
   MyTherapy still never persists weight/activity (medication-ingestion's
