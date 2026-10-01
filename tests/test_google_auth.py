@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -26,7 +26,13 @@ class _FakeResponse:
         return self._payload
 
 
-_SETTINGS = Settings(database_url="unused", google_client_id="cid", google_client_secret="secret")
+_SETTINGS = Settings(
+    database_url="unused",
+    google_client_id="cid",
+    google_client_secret="secret",
+    profile_height_m=1.80,
+    profile_birth_date=date(2000, 1, 1),
+)
 
 
 def test_build_authorization_url_contains_client_id_and_scopes():

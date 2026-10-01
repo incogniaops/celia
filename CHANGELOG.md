@@ -2,6 +2,21 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: redesign the dashboard's top biometric-card row — drop the Heart
+  Rate and Daily Resting Heart Rate cards (still synced and stored,
+  just no longer shown), add a BMI card computed independently from
+  weight and height (rather than trusting the Wyze export's own stored
+  BMI), and a metabolic-vs-chronological-age card using a birth date
+  and the Wyze-sourced metabolic age; move the glucose average/%CV out
+  of the "Time in range" text into its own card, next to A1C; height
+  and birth date are read from new PROFILE_HEIGHT_M/PROFILE_BIRTH_DATE
+  environment variables on Settings, not committed to source — an
+  initial hardcoded-module attempt was caught and corrected before
+  committing, since a real birth date and height would otherwise have
+  been published in this repo's git history; verified end-to-end in a
+  Podman container against real data (via the real, gitignored .env) —
+  the independently-computed BMI (33.7) matches the Wyze-stored value
+  exactly, and the card order and content match what was requested
 - fix: defer both dashboard charts' construction to the next animation
   frame (plus an explicit resize() as a second safety net), after the
   user reported the glucose trend chart intermittently rendering at

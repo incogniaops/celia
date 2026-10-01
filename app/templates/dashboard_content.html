@@ -32,16 +32,52 @@
 </script>
 
 <section class="biometric-cards">
-  {% for metric_type, metric in biometric_profile.items() %}
+  {% if bmi is not none %}
   <article>
-    <header>{{ metric_type.replace("_", " ")|title }}</header>
-    <div class="value">{{ "%.1f"|format(metric.value) if metric.value is not none else "—" }} {{ metric.unit or "" }}</div>
-    <small>{{ metric.recorded_at.date().isoformat() }}</small>
+    <header>BMI</header>
+    <div class="value">{{ "%.1f"|format(bmi) }}</div>
   </article>
-  {% else %}
-  <p>No biometric data yet — <a href="/auth/google/login">connect Google Health</a> to see weight, body fat and heart rate here.</p>
-  {% endfor %}
+  {% endif %}
+  {% if age_comparison %}
+  <article>
+    <header>Metabolic vs real age</header>
+    <div class="value">
+      {{ "%.0f"|format(age_comparison.metabolic_age) if age_comparison.metabolic_age is not none else "—" }}
+      vs {{ age_comparison.real_age }}
+    </div>
+    <small>Metabolic age vs chronological age</small>
+  </article>
+  {% endif %}
+  {% if biometric_profile.weight %}
+  <article>
+    <header>Weight</header>
+    <div class="value">{{ "%.1f"|format(biometric_profile.weight.value) }} {{ biometric_profile.weight.unit or "" }}</div>
+    <small>{{ biometric_profile.weight.recorded_at.date().isoformat() }}</small>
+  </article>
+  {% endif %}
+  {% if biometric_profile.muscle_mass %}
+  <article>
+    <header>Muscle Mass</header>
+    <div class="value">{{ "%.1f"|format(biometric_profile.muscle_mass.value) }} {{ biometric_profile.muscle_mass.unit or "" }}</div>
+    <small>{{ biometric_profile.muscle_mass.recorded_at.date().isoformat() }}</small>
+  </article>
+  {% endif %}
+  {% if biometric_profile.body_fat %}
+  <article>
+    <header>Body Fat</header>
+    <div class="value">{{ "%.1f"|format(biometric_profile.body_fat.value) }} {{ biometric_profile.body_fat.unit or "" }}</div>
+    <small>{{ biometric_profile.body_fat.recorded_at.date().isoformat() }}</small>
+  </article>
+  {% endif %}
+  {% if not biometric_profile.weight and not biometric_profile.muscle_mass and not biometric_profile.body_fat %}
+  <p>No biometric data yet — <a href="/auth/google/login">connect Google Health</a> or <a href="/uploads/wyze">upload a Wyze export</a> to see weight, body fat and muscle mass here.</p>
+  {% endif %}
   {% if glucose_summary %}
+  <article>
+    <header>Glucose average / CV</header>
+    <div class="value">{{ "%.0f"|format(glucose_summary.average_mgdl) }} mg/dL</div>
+    <small>CV: {{ "%.1f"|format(glucose_summary.cv_percent) }}%</small>
+  </article>
   <article>
     <header>A1C (estimated)</header>
     <div class="value">
@@ -66,10 +102,6 @@
       <tr><th scope="row" style="background-color:#fecaca;">Very high (&gt;250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_high) }}%</td></tr>
     </tbody>
   </table>
-  <p>
-    Average: <strong>{{ "%.0f"|format(glucose_summary.average_mgdl) }} mg/dL</strong> &nbsp;
-    CV: <strong>{{ "%.1f"|format(glucose_summary.cv_percent) }}%</strong>
-  </p>
   {% else %}
   <p>No glucose readings in this range.</p>
   {% endif %}

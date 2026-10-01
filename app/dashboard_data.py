@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import GlucoseReading, HealthMetric, MedicationDose
+from app.timezone import MEXICO_CITY
 
 # record_type 0 (historic auto-reading) and 1 (manual scan) are glucose
 # values; 5 (insulin/carb), 6 (sensor event) and 99 (PDF summary, see
@@ -12,12 +13,14 @@ from app.models import GlucoseReading, HealthMetric, MedicationDose
 GLUCOSE_RECORD_TYPES = (0, 1)
 
 # Named only in the dashboard requirement's "current biometric profile" --
-# steps/sleep (and the other Wyze body-composition fields: BMI, body water,
-# lean body mass, bone mass, protein, visceral fat, BMR, metabolic age,
-# skeletal muscle rate, fat content, subcutaneous fat) exist in
-# health_metrics but showing them is a later addition (see design.md
-# Non-Goals), not silently bundled in here.
-BIOMETRIC_METRIC_TYPES = ("weight", "body_fat", "heart_rate", "daily_resting_heart_rate", "muscle_mass")
+# heart_rate/daily_resting_heart_rate keep syncing (health-metrics-sync is
+# unaffected) but are no longer shown on the dashboard (see
+# biometric-cards-redesign's design.md); steps/sleep and the other Wyze
+# body-composition fields (BMI, body water, lean body mass, bone mass,
+# protein, visceral fat, BMR, skeletal muscle rate, fat content,
+# subcutaneous fat) exist in health_metrics but showing them is a later
+# addition, not silently bundled in here.
+BIOMETRIC_METRIC_TYPES = ("weight", "body_fat", "muscle_mass", "metabolic_age")
 
 # Fixed international AGP consensus bands (Battelino et al., 2019) -- the
 # same boundaries the user's own LibreView report uses, not a
@@ -256,6 +259,34 @@ def get_current_biometric_profile(db: Session) -> dict[str, HealthMetric]:
     )
     rows = db.execute(stmt).scalars().all()
     return {row.metric_type: row for row in rows}
+
+
+def get_bmi(biometric_profile: dict[str, HealthMetric], height_m: float) -> float | None:
+    """Computed by celia itself from weight / height^2, not read from the
+    Wyze export's own stored `bmi` metric_type -- auditable in celia's own
+    code rather than trusting Wyze's configured height (see design.md).
+    `height_m` comes from Settings (PROFILE_HEIGHT_M), not hardcoded here.
+    """
+    weight = biometric_profile.get("weight")
+    if weight is None or weight.value is None:
+        return None
+    return float(weight.value) / (height_m**2)
+
+
+def get_age_comparison(biometric_profile: dict[str, HealthMetric], birth_date: date) -> dict:
+    """Chronological age (from `birth_date`, as of today in
+    America/Mexico_City) alongside the Wyze scale's metabolic age, when
+    available (see design.md). `birth_date` comes from Settings
+    (PROFILE_BIRTH_DATE), not hardcoded here.
+    """
+    today = datetime.now(MEXICO_CITY).date()
+    real_age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
+    metabolic_age = biometric_profile.get("metabolic_age")
+    return {
+        "real_age": real_age,
+        "metabolic_age": float(metabolic_age.value) if metabolic_age and metabolic_age.value is not None else None,
+    }
 
 
 def has_any_data(db: Session) -> bool:

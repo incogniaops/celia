@@ -7,7 +7,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.dashboard_data import (
+    get_age_comparison,
     get_agp_percentile_bands,
+    get_bmi,
     get_current_biometric_profile,
     get_glucose_summary_stats,
     get_glucose_trend,
@@ -17,6 +19,7 @@ from app.dashboard_data import (
     glucose_value,
     has_any_data,
 )
+from app.config import Settings, get_settings
 from app.database import get_db
 from app.timezone import MEXICO_CITY
 
@@ -70,7 +73,7 @@ def _active_preset(start_dt: datetime, end_dt: datetime) -> int | None:
     return span_days if span_days in _PRESET_RANGE_DAYS else None
 
 
-def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
+def _dashboard_context(db: Session, settings: Settings, start: str | None, end: str | None) -> dict:
     start_dt, end_dt = _resolve_range(start, end)
 
     glucose_trend = get_glucose_trend(db, start_dt, end_dt)
@@ -83,6 +86,8 @@ def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
         db, start_dt, end_dt
     )
 
+    biometric_profile = get_current_biometric_profile(db)
+
     return {
         "start": start_dt.date().isoformat(),
         "end": end_dt.date().isoformat(),
@@ -91,7 +96,9 @@ def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
         "markers": get_insulin_carb_markers(db, start_dt, end_dt),
         "medication_calendar_days": medication_calendar_days,
         "medication_calendar_rows": medication_calendar_rows,
-        "biometric_profile": get_current_biometric_profile(db),
+        "biometric_profile": biometric_profile,
+        "bmi": get_bmi(biometric_profile, settings.profile_height_m),
+        "age_comparison": get_age_comparison(biometric_profile, settings.profile_birth_date),
         "glucose_summary": get_glucose_summary_stats(db, start_dt, end_dt),
         "agp_bands": get_agp_percentile_bands(db, start_dt, end_dt),
         "glucose_calendar_weeks": get_monthly_glucose_calendar(db, start_dt, end_dt),
@@ -100,12 +107,16 @@ def _dashboard_context(db: Session, start: str | None, end: str | None) -> dict:
 
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(
-    request: Request, start: str | None = None, end: str | None = None, db: Session = Depends(get_db)
+    request: Request,
+    start: str | None = None,
+    end: str | None = None,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
 ) -> HTMLResponse:
     if not has_any_data(db):
         return templates.TemplateResponse(request, "dashboard_empty.html", {})
 
-    context = _dashboard_context(db, start, end)
+    context = _dashboard_context(db, settings, start, end)
 
     # The date-range form re-submits this same route via HTMX to refresh
     # without a full page reload (design.md); on that follow-up request we

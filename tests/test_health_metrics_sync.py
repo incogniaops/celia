@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -20,7 +20,13 @@ from app.config import Settings
 from app.models import HealthMetric
 from app.repository import save_google_health_tokens
 
-_SETTINGS = Settings(database_url="unused", google_client_id="cid", google_client_secret="secret")
+_SETTINGS = Settings(
+    database_url="unused",
+    google_client_id="cid",
+    google_client_secret="secret",
+    profile_height_m=1.80,
+    profile_birth_date=date(2000, 1, 1),
+)
 
 
 class _FakeResponse:

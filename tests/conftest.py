@@ -12,6 +12,8 @@ from sqlalchemy import text
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://celia:celia@localhost:5432/celia_test")
 os.environ.setdefault("GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com")
 os.environ.setdefault("GOOGLE_CLIENT_SECRET", "test-client-secret")
+os.environ.setdefault("PROFILE_HEIGHT_M", "1.80")
+os.environ.setdefault("PROFILE_BIRTH_DATE", "2000-01-01")
 
 if "_test" not in os.environ["DATABASE_URL"].rsplit("/", 1)[-1]:
     raise RuntimeError(

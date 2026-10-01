@@ -1,7 +1,11 @@
 from datetime import date, datetime
 
+import pytest
+
 from app.dashboard_data import (
+    get_age_comparison,
     get_agp_percentile_bands,
+    get_bmi,
     get_current_biometric_profile,
     get_glucose_summary_stats,
     get_glucose_trend,
@@ -12,6 +16,7 @@ from app.dashboard_data import (
     has_any_data,
 )
 from app.models import GlucoseReading, HealthMetric, MedicationDose
+from app.timezone import MEXICO_CITY
 
 _START = datetime(2026, 8, 1)
 _END = datetime(2026, 8, 31)
@@ -268,6 +273,7 @@ def test_get_current_biometric_profile_returns_most_recent_per_type_and_ignores_
         [
             HealthMetric(metric_type="weight", recorded_at=datetime(2026, 8, 1), value=112, raw_json={}),
             HealthMetric(metric_type="weight", recorded_at=datetime(2026, 8, 20), value=113, raw_json={}),
+            HealthMetric(metric_type="body_fat", recorded_at=datetime(2026, 8, 15), value=30, raw_json={}),
             HealthMetric(metric_type="heart_rate", recorded_at=datetime(2026, 8, 15), value=70, raw_json={}),
             HealthMetric(metric_type="steps", recorded_at=datetime(2026, 8, 20), value=5000, raw_json={}),
         ]
@@ -276,8 +282,44 @@ def test_get_current_biometric_profile_returns_most_recent_per_type_and_ignores_
 
     profile = get_current_biometric_profile(db_session)
 
-    assert set(profile.keys()) == {"weight", "heart_rate"}
+    # heart_rate is synced but no longer shown on the dashboard (see
+    # biometric-cards-redesign's design.md); steps never was.
+    assert set(profile.keys()) == {"weight", "body_fat"}
     assert profile["weight"].value == 113
+
+
+def test_get_bmi_computes_from_weight_and_given_height(db_session):
+    profile = {"weight": HealthMetric(metric_type="weight", recorded_at=datetime(2026, 8, 20), value=90, raw_json={})}
+
+    assert get_bmi(profile, height_m=1.80) == pytest.approx(90 / (1.80**2))
+
+
+def test_get_bmi_is_none_without_weight():
+    assert get_bmi({}, height_m=1.80) is None
+
+
+def test_get_age_comparison_includes_metabolic_age_when_present():
+    profile = {
+        "metabolic_age": HealthMetric(
+            metric_type="metabolic_age", recorded_at=datetime(2026, 8, 20), value=44, raw_json={}
+        )
+    }
+    birth_date = date(1990, 6, 15)
+
+    comparison = get_age_comparison(profile, birth_date)
+
+    today = datetime.now(MEXICO_CITY).date()
+    assert comparison["metabolic_age"] == 44.0
+    assert comparison["real_age"] == today.year - birth_date.year - (
+        (today.month, today.day) < (birth_date.month, birth_date.day)
+    )
+
+
+def test_get_age_comparison_metabolic_age_none_when_absent():
+    comparison = get_age_comparison({}, date(1990, 6, 15))
+
+    assert comparison["metabolic_age"] is None
+    assert isinstance(comparison["real_age"], int)
 
 
 def test_has_any_data_false_when_all_tables_empty(db_session):

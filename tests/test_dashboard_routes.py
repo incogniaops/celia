@@ -43,6 +43,9 @@ def _seed(db_session):
             HealthMetric(
                 metric_type="muscle_mass", recorded_at=datetime(2026, 8, 10), value=69.5, unit="kg", raw_json={}
             ),
+            HealthMetric(
+                metric_type="metabolic_age", recorded_at=datetime(2026, 8, 10), value=44, unit="years", raw_json={}
+            ),
         ]
     )
     db_session.commit()
@@ -148,6 +151,46 @@ def test_dashboard_shows_muscle_mass_card_with_real_data(client, db_session):
     assert response.status_code == 200
     assert "Muscle Mass" in response.text
     assert "69.5" in response.text
+
+
+def test_dashboard_shows_bmi_card(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "<header>BMI</header>" in response.text
+    assert "34.9" in response.text  # 113.0 / PROFILE_HEIGHT_M (test default 1.80)**2, rounded
+
+
+def test_dashboard_shows_age_comparison_card(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "Metabolic vs real age" in response.text
+    assert "44" in response.text
+
+
+def test_dashboard_no_longer_shows_heart_rate_cards(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "Heart Rate" not in response.text
+    assert "Daily Resting Heart Rate" not in response.text
+
+
+def test_dashboard_shows_glucose_average_cv_card_and_no_longer_repeats_in_time_in_range(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "<header>Glucose average / CV</header>" in response.text
+    assert "Average: <strong>" not in response.text
 
 
 def test_dashboard_shows_a1c_card_with_glucose_data(client, db_session):
