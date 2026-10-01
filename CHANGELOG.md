@@ -2,6 +2,11 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- chore: archive the dark-light-theme-toggle OpenSpec change, syncing
+  its "Dark/light theme toggle" requirement (and the two legibility
+  scenarios added after the user's browser screenshot) into the main
+  dashboard spec; `openspec validate --specs` passes with 0 failures
+  across all seven capability specs
 - fix: fix dark-mode legibility in the two Chart.js charts (glucose
   trend, AGP) and the hardcoded-colour "Time in range"/"Monthly glucose
   calendar" cells, found via the user's own browser screenshot right
