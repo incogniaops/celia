@@ -306,3 +306,37 @@
   </div>
   <small>Red: very low/very high average &nbsp; Amber: low/high average &nbsp; Plain: in range or no data that day</small>
 </article>
+
+<article>
+  <header>Sensor log</header>
+  {% if sensor_log.entries %}
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Serial</th>
+        <th scope="col">Start date</th>
+        <th scope="col">Start status</th>
+        <th scope="col">End date</th>
+        <th scope="col">End status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in sensor_log.entries %}
+      <tr>
+        <td>{{ entry.serial }}</td>
+        <td>{{ entry.start_date.isoformat() }}</td>
+        <td>{{ entry.start_status_code }}</td>
+        <td>{{ entry.end_date.isoformat() if entry.end_date else "—" }}</td>
+        <td>{{ entry.end_status_code or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No sensor-log entries overlap this range.</p>
+  {% endif %}
+  {% if sensor_log.unlogged_days %}
+  <small>{{ sensor_log.unlogged_days }} day{{ "s" if sensor_log.unlogged_days != 1 else "" }} in this range have no matching sensor-log entry.</small>
+  {% endif %}
+  <p><a href="/sensor-log">Manage sensor log</a></p>
+</article>

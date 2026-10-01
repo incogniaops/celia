@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>celia — Sensor log</title>
+</head>
+<body>
+  <main>
+    <h1>Sensor log</h1>
+    <p>
+      Manually record which FreeStyle Libre sensor you wore during a given period --
+      celia's one deliberate exception to "no manual data entry".
+    </p>
+
+    {% if error %}
+    <p style="color: #b00020;">{{ error }}</p>
+    {% endif %}
+
+    {% if entries %}
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Serial</th>
+          <th scope="col">Start date</th>
+          <th scope="col">Start status</th>
+          <th scope="col">End date</th>
+          <th scope="col">End status</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td>{{ entry.serial }}</td>
+          <td>{{ entry.start_date.isoformat() }}</td>
+          <td>{{ entry.start_status_code }}</td>
+          <td>{{ entry.end_date.isoformat() if entry.end_date else "—" }}</td>
+          <td>{{ entry.end_status_code or "—" }}</td>
+          <td>
+            {% if not entry.end_date %}
+            <form method="post" action="/sensor-log/{{ entry.id }}/close">
+              <input type="date" name="end_date" required>
+              <input type="text" name="end_status_code" placeholder="End status (optional)">
+              <button type="submit">Close</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No sensor-log entries yet.</p>
+    {% endif %}
+
+    <h2>Record a new sensor period</h2>
+    <form method="post" action="/sensor-log">
+      <label>
+        Serial
+        <input type="text" name="serial" required>
+      </label>
+      <label>
+        Start date
+        <input type="date" name="start_date" required>
+      </label>
+      <label>
+        Start status code
+        <input type="text" name="start_status_code" required>
+      </label>
+      <button type="submit">Add</button>
+    </form>
+  </main>
+</body>
+</html>

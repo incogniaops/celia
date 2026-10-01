@@ -2,6 +2,25 @@
 
 ## [2026-10-01] - Implement data-sharing as a PDF export
 
+- feat: implement sensor-log (US-06), the last unbuilt user story and
+  celia's one deliberate manual-data-entry exception -- a new
+  sensor_log_entries table (serial, start/end dates, start/end status
+  codes, the end fields independently nullable so a period can be closed
+  with its end date even when the status code has aged out of the
+  FreeStyle LibreLink app's "last 3 sensors" list); GET/POST /sensor-log
+  (list + record a new open period) and POST /sensor-log/{id}/close,
+  plain HTMX-posted forms matching the upload pages' style, not the
+  HTMX-dashboard style; a new overlap check (Python-side, over the
+  handful of existing rows) rejects a new entry whose range would overlap
+  an existing one, naming the conflict, checked only on insert since
+  closing an entry can only shrink its range, never introduce a new
+  overlap -- and since two open-ended entries always overlap each other,
+  this same check already guarantees at most one open entry can exist at
+  a time, with no separate rule needed; a new "Sensor log" dashboard
+  section lists entries overlapping the selected range and how many days
+  in it remain unlogged, without blocking any other section when the log
+  is empty; verified end-to-end in the Podman container (create, close,
+  overlap rejection, dashboard integration) against the real dev database
 - chore: remove the old openspec/changes/data-sharing-pdf-export/ files --
   the previous archive commit added their copy under
   openspec/changes/archive/ but missed staging this deletion

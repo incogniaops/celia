@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import JSON, DateTime, Numeric, SmallInteger, String, UniqueConstraint
+from sqlalchemy import JSON, Date, DateTime, Numeric, SmallInteger, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -99,3 +99,30 @@ class HealthMetric(Base):
     source_platform: Mapped[str | None] = mapped_column(String, nullable=True)
     source_package: Mapped[str | None] = mapped_column(String, nullable=True)
     raw_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+
+class SensorLogEntry(Base):
+    """One manually-recorded FreeStyle Libre sensor period (US-06) --
+    celia's sole manual-data-entry exception (see A-06, A-07).
+
+    Day-granularity `Date` columns, not `DateTime`: a sensor period is
+    recorded against calendar dates, matching the FreeStyle LibreLink app's
+    own "Acerca de" screen. `end_date`/`end_status_code` are nullable
+    independently of each other: an entry starts open-ended (both null)
+    and, per this capability's spec, can later be closed with an end date
+    even when the status code is no longer available (the sensor aged out
+    of the app's "last 3 sensors" list) -- so end_status_code can be null
+    on an otherwise-closed entry. No overlap constraint is enforced at the
+    database level: it's checked in Python at insert time only (see
+    sensor-log's design.md), so a migration-level constraint isn't needed
+    for this few-rows-per-month table.
+    """
+
+    __tablename__ = "sensor_log_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    serial: Mapped[str] = mapped_column(String, nullable=False)
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    start_status_code: Mapped[str] = mapped_column(String, nullable=False)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_status_code: Mapped[str | None] = mapped_column(String, nullable=True)

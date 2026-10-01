@@ -1,9 +1,25 @@
-from datetime import datetime
+from datetime import date, datetime
 
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from app.models import GlucoseReading, GoogleHealthCredential, HealthMetric, MedicationDose
+from app.models import GlucoseReading, GoogleHealthCredential, HealthMetric, MedicationDose, SensorLogEntry
+
+
+class SensorLogOverlapError(Exception):
+    """Raised when a new sensor-log entry's date range would overlap an
+    existing one (sensor-log's "No overlapping sensor periods" requirement).
+    Carries the conflicting entry so callers can name it to the user.
+    """
+
+    def __init__(self, conflicting_entry: SensorLogEntry) -> None:
+        self.conflicting_entry = conflicting_entry
+        super().__init__(
+            f"Overlaps existing entry for serial {conflicting_entry.serial!r} "
+            f"starting {conflicting_entry.start_date}"
+        )
+
 
 # Single-row convention for the single-user MVP's Google OAuth credential.
 _CREDENTIAL_ROW_ID = 1
@@ -135,3 +151,55 @@ def insert_health_metrics(db: Session, metrics: list[dict]) -> int:
 
     db.commit()
     return total_inserted
+
+
+def _sensor_log_overlaps(a_start: date, a_end: date | None, b_start: date, b_end: date | None) -> bool:
+    """A null end treats the period as open-ended ([start, +inf)), per
+    sensor-log's design.md -- two open entries always satisfy this, which is
+    what already guarantees at most one open entry can exist at a time,
+    without a separate rule for it.
+    """
+    a_end_or_inf = a_end or date.max
+    b_end_or_inf = b_end or date.max
+    return a_start <= b_end_or_inf and b_start <= a_end_or_inf
+
+
+def insert_sensor_log_entry(
+    db: Session, serial: str, start_date: date, start_status_code: str
+) -> SensorLogEntry:
+    """Insert a new open-ended sensor-log entry, after checking it doesn't
+    overlap an existing one (checked only on insert -- see design.md for why
+    closing an entry never needs this same check).
+    """
+    existing = db.execute(select(SensorLogEntry)).scalars().all()
+    for entry in existing:
+        if _sensor_log_overlaps(start_date, None, entry.start_date, entry.end_date):
+            raise SensorLogOverlapError(entry)
+
+    new_entry = SensorLogEntry(serial=serial, start_date=start_date, start_status_code=start_status_code)
+    db.add(new_entry)
+    db.commit()
+    db.refresh(new_entry)
+    return new_entry
+
+
+def close_sensor_log_entry(
+    db: Session, entry_id: int, end_date: date, end_status_code: str | None
+) -> SensorLogEntry | None:
+    """Close an open sensor-log entry. Returns None if entry_id doesn't
+    exist; the caller decides how to surface that (e.g. a 404).
+    """
+    entry = db.get(SensorLogEntry, entry_id)
+    if entry is None:
+        return None
+    entry.end_date = end_date
+    entry.end_status_code = end_status_code
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+def get_sensor_log_entries(db: Session) -> list[SensorLogEntry]:
+    """All sensor-log entries, most recently started first."""
+    stmt = select(SensorLogEntry).order_by(SensorLogEntry.start_date.desc())
+    return list(db.execute(stmt).scalars().all())

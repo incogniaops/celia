@@ -17,6 +17,7 @@ from app.dashboard_data import (
     get_insulin_carb_markers,
     get_medication_adherence_calendar,
     get_monthly_glucose_calendar,
+    get_sensor_log_overlaps,
     glucose_value,
     has_any_data,
 )
@@ -105,6 +106,7 @@ def _dashboard_context(db: Session, settings: Settings, start: str | None, end: 
         "glucose_summary": get_glucose_summary_stats(db, start_dt, end_dt),
         "agp_bands": get_agp_percentile_bands(db, start_dt, end_dt),
         "glucose_calendar_weeks": get_monthly_glucose_calendar(db, start_dt, end_dt),
+        "sensor_log": get_sensor_log_overlaps(db, start_dt, end_dt),
     }
 
 

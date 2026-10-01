@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import GlucoseReading, HealthMetric, MedicationDose
+from app.models import GlucoseReading, HealthMetric, MedicationDose, SensorLogEntry
 from app.timezone import MEXICO_CITY
 
 # record_type 0 (historic auto-reading) and 1 (manual scan) are glucose
@@ -283,6 +283,36 @@ def get_daily_glucose_profiles(db: Session, start: datetime, end: datetime) -> l
             week = []
         day += timedelta(days=1)
     return weeks
+
+
+def get_sensor_log_overlaps(db: Session, start: datetime, end: datetime) -> dict:
+    """Sensor-log entries overlapping the selected range (by calendar date,
+    inclusive) and how many days within it have no matching entry -- the
+    dashboard's "Sensor log" section (see sensor-log's design.md). An open
+    entry (no end_date) is treated as covering through the range's own end,
+    same open-ended convention as the sensor-log capability itself.
+    """
+    start_day = start.date()
+    end_day = end.date()
+    entries = db.execute(select(SensorLogEntry)).scalars().all()
+
+    overlapping = [
+        entry
+        for entry in entries
+        if entry.start_date <= end_day and (entry.end_date is None or entry.end_date >= start_day)
+    ]
+
+    logged_days: set[date] = set()
+    for entry in overlapping:
+        entry_start = max(entry.start_date, start_day)
+        entry_end = min(entry.end_date or end_day, end_day)
+        day = entry_start
+        while day <= entry_end:
+            logged_days.add(day)
+            day += timedelta(days=1)
+
+    total_days = (end_day - start_day).days + 1
+    return {"entries": overlapping, "unlogged_days": total_days - len(logged_days)}
 
 
 def get_current_biometric_profile(db: Session) -> dict[str, HealthMetric]:
