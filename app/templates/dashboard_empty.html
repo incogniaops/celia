@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>celia — Dashboard</title>
+  <script>
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("celia-theme") || "dark");
+  </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
 </head>
 <body>
+  <button onclick="celiaToggleTheme()" aria-label="Toggle dark/light theme" style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">🌓</button>
   <main class="container">
     <h1>Nothing here yet</h1>
     <p>celia hasn't ingested anything yet. Start with one of these:</p>
@@ -17,5 +21,12 @@
       <li><a href="/uploads/wyze">Upload a Wyze body-composition export</a> (muscle mass and other body-composition data)</li>
     </ul>
   </main>
+  <script>
+    function celiaToggleTheme() {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("celia-theme", next);
+    }
+  </script>
 </body>
 </html>

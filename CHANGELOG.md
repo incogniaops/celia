@@ -2,6 +2,37 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- fix: fix dark-mode legibility in the two Chart.js charts (glucose
+  trend, AGP) and the hardcoded-colour "Time in range"/"Monthly glucose
+  calendar" cells, found via the user's own browser screenshot right
+  after the theme-toggle feature below was first deployed to the
+  Podman container — Chart.js doesn't read Pico's data-theme and was
+  rendering tick/legend/gridline text in its default light-page colour
+  against the new dark background, and the pastel table/calendar
+  cells' text was inheriting the dark theme's light default instead of
+  staying readable against their own fixed backgrounds; both charts
+  now read data-theme at build time and redraw via a new
+  celia-theme-change event when the user toggles, and the pastel cells
+  pin a fixed dark text colour matching their own background; the
+  theme-toggle commit itself had first been committed, then reverted,
+  because this environment has no browser automation and the user
+  correctly pointed out that is exactly why the commit should have
+  waited for their own browser confirmation rather than disclosing the
+  gap after the fact — both the toggle and this legibility fix are
+  committed together now that the user has confirmed them in their own
+  browser
+- feat: add a dark/light theme toggle to the dashboard, defaulting to
+  dark when no preference is stored; the choice persists across
+  reloads via localStorage, and the theme is set before first paint to
+  avoid a flash of the wrong theme; scoped to the two Pico.css-styled
+  pages (dashboard.html, dashboard_empty.html) — the three upload pages
+  don't load Pico.css and have no visual theme to toggle; verified
+  server-side in a Podman container that the script/button render
+  once and are absent from the HTMX fragment response, so range-preset
+  clicks don't reset or duplicate them; the flash-free rendering and
+  click-to-toggle behaviour itself are real-browser-only concerns this
+  environment has no browser automation for, same limitation as
+  chart-resize-after-swap
 - docs: bring PS-CELIA-001 (v1.1 -> v1.2) back in line with what was
   actually built, so it can be the anchor spec again — add US-07
   (Wyze body-composition export, the fourth data source, missing

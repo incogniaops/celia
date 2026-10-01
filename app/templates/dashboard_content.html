@@ -17,6 +17,14 @@
   </label>
 </fieldset>
 <script>
+  function celiaChartTextColor() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "#e5e7eb" : "#374151";
+  }
+  function celiaChartGridColor() {
+    return document.documentElement.getAttribute("data-theme") === "dark"
+      ? "rgba(229, 231, 235, 0.15)"
+      : "rgba(55, 65, 81, 0.1)";
+  }
   function celiaSelectRange(days) {
     const end = new Date();
     const start = new Date();
@@ -81,11 +89,11 @@
   {% if glucose_summary %}
   <table>
     <tbody>
-      <tr><th scope="row" style="background-color:#fecaca;">Very low (&lt;54 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_low) }}%</td></tr>
-      <tr><th scope="row" style="background-color:#fed7aa;">Low (54-69 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.low) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fecaca; color:#7f1d1d;">Very low (&lt;54 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_low) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fed7aa; color:#7c2d12;">Low (54-69 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.low) }}%</td></tr>
       <tr><th scope="row">In range (70-180 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.in_range) }}%</td></tr>
-      <tr><th scope="row" style="background-color:#fed7aa;">High (181-250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.high) }}%</td></tr>
-      <tr><th scope="row" style="background-color:#fecaca;">Very high (&gt;250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_high) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fed7aa; color:#7c2d12;">High (181-250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.high) }}%</td></tr>
+      <tr><th scope="row" style="background-color:#fecaca; color:#7f1d1d;">Very high (&gt;250 mg/dL)</th><td>{{ "%.0f"|format(glucose_summary.band_percentages.very_high) }}%</td></tr>
     </tbody>
   </table>
   {% else %}
@@ -103,7 +111,7 @@
     if (window.celiaGlucoseChart) {
       window.celiaGlucoseChart.destroy();
     }
-    requestAnimationFrame(() => {
+    function build() {
       window.celiaGlucoseChart = new Chart(ctx, {
         type: "line",
         data: {
@@ -119,10 +127,25 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { x: { display: false } },
+          color: celiaChartTextColor(),
+          scales: {
+            x: { display: false },
+            y: {
+              ticks: { color: celiaChartTextColor() },
+              grid: { color: celiaChartGridColor() },
+            },
+          },
+          plugins: { legend: { labels: { color: celiaChartTextColor() } } },
         },
       });
       window.celiaGlucoseChart.resize();
+    }
+    requestAnimationFrame(build);
+    document.addEventListener("celia-theme-change", () => {
+      if (window.celiaGlucoseChart) {
+        window.celiaGlucoseChart.destroy();
+      }
+      build();
     });
   })();
 </script>
@@ -145,7 +168,7 @@
         const m = String(b.minute_of_day % 60).padStart(2, "0");
         return `${h}:${m}`;
       });
-      requestAnimationFrame(() => {
+      function build() {
         window.celiaAgpChart = new Chart(ctx, {
           type: "line",
           data: {
@@ -161,10 +184,28 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { x: { ticks: { maxTicksLimit: 12 } } },
+            color: celiaChartTextColor(),
+            scales: {
+              x: {
+                ticks: { maxTicksLimit: 12, color: celiaChartTextColor() },
+                grid: { color: celiaChartGridColor() },
+              },
+              y: {
+                ticks: { color: celiaChartTextColor() },
+                grid: { color: celiaChartGridColor() },
+              },
+            },
+            plugins: { legend: { labels: { color: celiaChartTextColor() } } },
           },
         });
         window.celiaAgpChart.resize();
+      }
+      requestAnimationFrame(build);
+      document.addEventListener("celia-theme-change", () => {
+        if (window.celiaAgpChart) {
+          window.celiaAgpChart.destroy();
+        }
+        build();
       });
     })();
   </script>
@@ -246,9 +287,9 @@
           {% if cell is none %}
           <td></td>
           {% elif cell.band in ("very_low", "very_high") %}
-          <td style="background-color:#fecaca;"><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
+          <td style="background-color:#fecaca; color:#7f1d1d;"><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
           {% elif cell.band in ("low", "high") %}
-          <td style="background-color:#fed7aa;"><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
+          <td style="background-color:#fed7aa; color:#7c2d12;"><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
           {% elif cell.band == "in_range" %}
           <td><strong>{{ cell.date.day }}</strong><br>{{ "%.0f"|format(cell.average_mgdl) }}</td>
           {% else %}
