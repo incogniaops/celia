@@ -176,6 +176,23 @@ def test_glucose_summary_stats_gmi_matches_libreview_worked_example(db_session):
 
     assert stats["average_mgdl"] == 112
     assert round(stats["gmi_percent"], 1) == 6.0
+    assert round(stats["gmi_mmol_mol"]) == 42
+
+
+def test_glucose_summary_stats_days_with_data_counts_distinct_calendar_days(db_session):
+    db_session.add_all(
+        [
+            _glucose_reading(datetime(2026, 8, 5, 0), 0, historic_glucose_mgdl=100),
+            _glucose_reading(datetime(2026, 8, 5, 12), 0, historic_glucose_mgdl=110),
+            _glucose_reading(datetime(2026, 8, 10, 0), 0, historic_glucose_mgdl=120),
+        ]
+    )
+    db_session.commit()
+
+    stats = get_glucose_summary_stats(db_session, _START, _END)
+
+    assert stats["days_with_data"] == 2  # Aug 5 (two readings) and Aug 10
+    assert stats["days_in_range"] == 31  # _START = Aug 1, _END = Aug 31 inclusive
 
 
 def test_glucose_summary_stats_cv_percent(db_session):

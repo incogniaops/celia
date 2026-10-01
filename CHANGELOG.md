@@ -2,6 +2,14 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: add the mmol/mol (IFCC) equivalent and a "data spans X of Y days"
+  coverage line to the dashboard's A1C card, matching LibreView's own
+  "A1C calculada" report screen; verified end-to-end in a Podman container
+  against the exact range from the user's own screenshot (3 July -
+  30 September 2026) — the day-coverage figure matched exactly
+  (61 of 90 days); the GMI itself was close but not identical over this
+  wider window (6.3%/45 mmol/mol vs the screenshot's 6.0%/42 mmol/mol),
+  consistent with the approximation already noted for glucose-pattern-views
 - feat: add body-composition-ingestion — a stdlib-only (zipfile +
   ElementTree, no new dependency) parser for the Wyze scale's own
   "Body Composition Data" .xlsx export, since muscle mass and most other

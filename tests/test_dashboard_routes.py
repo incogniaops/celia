@@ -92,6 +92,8 @@ def test_dashboard_shows_a1c_card_with_glucose_data(client, db_session):
     assert response.status_code == 200
     assert "A1C (estimated)" in response.text
     assert "Glucose Management Indicator (GMI)" in response.text
+    assert "mmol/mol" in response.text
+    assert "Data spans" in response.text
 
 
 def test_dashboard_omits_a1c_card_without_glucose_data(client, db_session):

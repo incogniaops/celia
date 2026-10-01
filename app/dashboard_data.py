@@ -149,12 +149,18 @@ def get_glucose_summary_stats(db: Session, start: datetime, end: datetime) -> di
 
     mean = statistics.mean(values)
     cv_percent = (statistics.stdev(values) / mean * 100) if len(values) > 1 else 0.0
+    gmi_percent = 3.31 + 0.02392 * mean
 
     return {
         "band_percentages": {band: count / len(values) * 100 for band, count in counts.items()},
         "average_mgdl": mean,
-        "gmi_percent": 3.31 + 0.02392 * mean,
+        "gmi_percent": gmi_percent,
+        # DCCT-to-IFCC conversion -- the same formula producing LibreView's
+        # own "42 mmol/mol" from a 6.0% GMI (see design.md).
+        "gmi_mmol_mol": 10.929 * (gmi_percent - 2.15),
         "cv_percent": cv_percent,
+        "days_with_data": len({r.device_timestamp.date() for r in readings}),
+        "days_in_range": (end.date() - start.date()).days + 1,
     }
 
 

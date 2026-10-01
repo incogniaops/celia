@@ -19,8 +19,12 @@
   {% if glucose_summary %}
   <article>
     <header>A1C (estimated)</header>
-    <div class="value">{{ "%.1f"|format(glucose_summary.gmi_percent) }}%</div>
-    <small>Glucose Management Indicator (GMI)</small>
+    <div class="value">
+      {{ "%.1f"|format(glucose_summary.gmi_percent) }}%
+      <small>({{ "%.0f"|format(glucose_summary.gmi_mmol_mol) }} mmol/mol)</small>
+    </div>
+    <small>Glucose Management Indicator (GMI)</small><br>
+    <small>Data spans {{ glucose_summary.days_with_data }} of {{ glucose_summary.days_in_range }} days</small>
   </article>
   {% endif %}
 </section>
