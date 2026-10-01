@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Product Specification ID | PS-CELIA-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | **Engineering Ready** |
 | Product Manager | Rodrigo Álvarez |
 | Product Owner | Rodrigo Álvarez |
@@ -14,13 +14,15 @@
 
 **Version 1.3 note:** US-05 is now built, resolving OD-02: the share mechanism is a downloadable PDF export (LaTeX-typeset via Tectonic, styled on the user's own real LibreView AGP report), generated on demand for the dashboard's selected date range, which the user prints or emails to a doctor himself -- not a signed link. The two acceptance criteria describing link-specific behaviour (view-only link access, revocation) are replaced with PDF-specific ones. BR-01, Q-05 and A-04 are updated to match. US-06 (sensor log) remains specified but not yet built.
 
+**Version 1.4 note:** US-06 is now built -- the last of the seven user stories, so all of US-01 – US-07 are built and verified end-to-end against real data. AC-06.4/AC-06.5 are corrected: the dashboard surfaces sensor-log coverage as a dedicated "Sensor log" section (listing every entry overlapping the selected range, plus how many days in it are unlogged), not a per-date marker woven into the glucose trend chart as originally specified -- a reasonable implementation choice recorded in the sensor-log change's design.md, not a behaviour gap.
+
 ## 1. Delivery Context
 
 **Parent Use Case (Epic):** UC-01 — Personal Health Data Consolidation.
 *Business objective:* one self-hosted place to bring together a single person's diabetes-related data — glucose readings, medication adherence and, eventually, other health metrics — so it can be reviewed and shared without depending on the separate, closed ecosystems (Abbott/LibreView, MyTherapy, Google/Apple) that produce it.
 
 **Current Feature:** F1 — Self-Hosted Diabetes Dashboard.
-The user (Rodrigo) ingests exports from FreeStyle Libre and MyTherapy, a Google Health API sync for weight, vitals (body fat, heart rate, resting heart rate) and activity (steps, sleep), and a Wyze body-composition export (muscle mass, BMI, body water, lean body mass, bone mass, protein, visceral fat, BMR, metabolic age, skeletal muscle rate, fat content, subcutaneous fat, plus its own weight/body-fat/heart-rate readings). He views all of it as one consolidated, time-aligned dashboard: a glucose trend with insulin/carbohydrate markers, a medication-adherence calendar, glucose pattern views (time-in-range, ambulatory glucose profile, monthly calendar), and a biometric-and-glucose-summary card row (metabolic-age delta, weight, body fat, BMI, glucose average, estimated A1C), filterable by one-click date-range presets (7/14/30/90 days) — in a browser on desktop or mobile. He can generate a downloadable PDF export of that same view, styled as an editorial clinical report, to print or email to his doctors.
+The user (Rodrigo) ingests exports from FreeStyle Libre and MyTherapy, a Google Health API sync for weight, vitals (body fat, heart rate, resting heart rate) and activity (steps, sleep), and a Wyze body-composition export (muscle mass, BMI, body water, lean body mass, bone mass, protein, visceral fat, BMR, metabolic age, skeletal muscle rate, fat content, subcutaneous fat, plus its own weight/body-fat/heart-rate readings). He views all of it as one consolidated, time-aligned dashboard: a glucose trend with insulin/carbohydrate markers, a medication-adherence calendar, glucose pattern views (time-in-range, ambulatory glucose profile, monthly calendar), a biometric-and-glucose-summary card row (metabolic-age delta, weight, body fat, BMI, glucose average, estimated A1C), and a manually-maintained sensor-log section (which FreeStyle Libre sensor was active for the selected range, and how many days in it are unlogged), filterable by one-click date-range presets (7/14/30/90 days) — in a browser on desktop or mobile. He can generate a downloadable PDF export of that same view, styled as an editorial clinical report, to print or email to his doctors.
 
 **Current Product Iteration:** MVP (México Tech Hub SDD Hackathon, 2026-09-21 to 2026-10-02; core hacking days 2026-09-29 to 2026-10-01).
 
@@ -263,9 +265,11 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 - **AC-06.1** **Given** a new sensor the user has started wearing, **when** they add a log entry with its serial, start date and the status code shown in the FreeStyle LibreLink app's "Acerca de" (About) screen at that time, **then** celia stores it as an open-ended period (no end date yet).
 - **AC-06.2** **Given** an open sensor-log entry, **when** the user records that sensor's end date and the status code shown for it at that point (whether it lasted the typical 14–15 days or failed earlier), **then** the entry is closed for that period, with both its start and end status codes stored.
 - **AC-06.3** **Given** two sensor-log entries, **when** their date ranges would overlap, **then** celia rejects the overlapping entry and tells the user which existing entry conflicts.
-- **AC-06.4** **Given** one or more sensor-log entries, **when** the user views the dashboard (US-04), **then** the active sensor for any given date is shown alongside the glucose trend for that date, together with its status code(s).
-- **AC-06.5** **Given** a period of the glucose timeline with no matching sensor-log entry, **when** the user views the dashboard, **then** that period is marked as having an unlogged sensor, without blocking the rest of the view.
+- **AC-06.4** **Given** one or more sensor-log entries, **when** the user views the dashboard (US-04) for a date range, **then** a "Sensor log" section lists every entry overlapping that range (serial, start date, start status code, end date and end status code if closed).
+- **AC-06.5** **Given** a period of the selected date range with no matching sensor-log entry, **when** the user views the dashboard, **then** the "Sensor log" section shows how many days in the range are unlogged, without blocking the rest of the view.
 - **AC-06.6** **Given** the status code is only available while the sensor is still listed in the app's "last 3 sensors", **when** the user closes a sensor-log entry after it has aged out of that list, **then** celia still allows the end date to be recorded, with the end status code left blank rather than blocking the update.
+
+**Confirmed technical details:** A new `GET`/`POST /sensor-log` page (list existing entries, record a new open-ended period) and `POST /sensor-log/{id}/close`, plain HTMX-posted forms matching the upload pages' style, not the HTMX-driven dashboard. The overlap check (AC-06.3) runs only when a new entry is inserted, never when closing one, since closing can only shrink a period's range; this also means two open-ended entries always overlap each other, so the same check already guarantees at most one open entry can exist at a time, with no separate rule needed for it.
 
 **Business Rules:** BR-05
 **Quality Attributes:** Q-05
@@ -386,7 +390,7 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 
 ## 16. Product Readiness Assessment
 
-**Engineering Readiness (Definition of Ready, 2026-10-01):** ☒ **Engineering Ready.** Core scope, actors, sources and MVP stories are defined, and all four data sources have real data in hand and/or verified working: LibreView export (in hand), Google Health API (weight, body fat, heart rate, resting heart rate, steps, sleep — all verified working), MyTherapy (CSV export + monthly PDFs, in hand), and the Wyze body-composition export (in hand, verified working). Six of seven user stories (US-01 – US-05, US-07) are built and verified end-to-end against real data; only US-06 (sensor log) remains specified but not yet built. OD-02 (share mechanism) is closed, resolved as a PDF export.
+**Engineering Readiness (Definition of Ready, 2026-10-01):** ☒ **Engineering Ready.** Core scope, actors, sources and MVP stories are defined, and all four data sources have real data in hand and/or verified working: LibreView export (in hand), Google Health API (weight, body fat, heart rate, resting heart rate, steps, sleep — all verified working), MyTherapy (CSV export + monthly PDFs, in hand), and the Wyze body-composition export (in hand, verified working). All seven user stories (US-01 – US-07) are built and verified end-to-end against real data. OD-02 (share mechanism) is closed, resolved as a PDF export.
 
 | Outstanding Action | Owner | Status |
 |---|---|---|

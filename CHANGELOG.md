@@ -2,6 +2,17 @@
 
 ## [2026-10-01] - Implement data-sharing as a PDF export
 
+- docs: bring PS-CELIA-001 (v1.3 -> v1.4) in line with US-06 now being
+  built -- the last of the seven user stories, so all of US-01 - US-07
+  are built and verified end-to-end against real data; correct
+  AC-06.4/AC-06.5 for the actual dashboard surface (a dedicated "Sensor
+  log" section listing overlapping entries and an unlogged-day count,
+  not a per-date marker woven into the glucose trend chart as originally
+  specified)
+- chore: archive the sensor-log OpenSpec change, syncing its ADDED
+  "Sensor log overlap view" requirement into the main dashboard spec;
+  `openspec validate --specs` passes with 0 failures across all seven
+  capability specs
 - feat: implement sensor-log (US-06), the last unbuilt user story and
   celia's one deliberate manual-data-entry exception -- a new
   sensor_log_entries table (serial, start/end dates, start/end status
