@@ -2,6 +2,12 @@
 
 ## [2026-10-01] - Implement data-sharing as a PDF export
 
+- chore: archive the data-sharing-pdf-export OpenSpec change, syncing its
+  rewritten "Generate a scoped read-only share" requirement (PDF mechanism,
+  all six scenarios) into the main data-sharing spec, and removing the two
+  link-specific requirements ("Read-only access for share recipients",
+  "Revocable shares") it superseded; `openspec validate --specs` passes
+  with 0 failures across all seven capability specs
 - feat: implement data-sharing (US-05) as a downloadable PDF export instead
   of a signed share link, resolving OD-02 -- a new GET
   /dashboard/export.pdf route (reusing the dashboard's own start/end

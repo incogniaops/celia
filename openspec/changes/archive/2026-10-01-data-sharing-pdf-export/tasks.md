@@ -1,0 +1,35 @@
+# Tasks
+
+## 1. Tectonic in the container image
+
+- [x] 1.1 Add the Tectonic binary to the Containerfile's builder stage (download the official release matching the image's architecture) and verify `tectonic --version` runs inside a build of the image.
+- [x] 1.2 Warm Tectonic's package cache during the builder stage by rendering the real report template with synthetic sample data (`app/pdf_export/warmup.py`) and compiling that -- not a separately hand-maintained throwaway document, which drifted from the real template twice (a mismatched `\documentclass` font-size option, then a missing `groupplots` library) before this change was committed; verify the resulting cache directory is non-empty.
+- [x] 1.3 Copy the `tectonic` binary and the warmed cache directory into the final stage, owned by the existing non-root `celia` user, and verify `podman run --network none <image> tectonic --version` (and compiling the same throwaway document with `--network none`) both succeed with no network access.
+
+## 2. Per-day glucose data for the daily-profile grid
+
+- [x] 2.1 Add `get_daily_glucose_profiles(db, start, end)` to `app/dashboard_data.py`, grouping `get_glucose_trend`'s readings by calendar day into raw `(minute_of_day, value)` points per day, and reusing the same Monday-start week-grid construction as `get_monthly_glucose_calendar`; verify against the real dev database that every day with glucose data in a sample range produces a non-empty points list, and the week grid's shape matches `get_monthly_glucose_calendar`'s for the same range.
+
+## 3. LaTeX template: header and summary boxes
+
+- [x] 3.1 Create the `.tex` Jinja2 template with LaTeX-safe custom delimiters and a `latex_escape` filter for the user's name; verify a standalone render (no PDF compile yet) produces valid-looking `.tex` source with the name correctly substituted and no delimiter collisions.
+- [x] 3.1b Fixed two real visual-quality issues the user caught in their browser and rejected outright: (1) default serif (Computer Modern) font -- switched to Latin Modern Sans via `fontspec`, loaded by exact bundled `.otf` filename since this sandboxed build has no fontconfig database for the usual by-name lookup; (2) bare floating text that didn't resemble Abbott's report at all -- restructured every section into Abbott-style shaded `tcolorbox` panels, with the top two panels equal-height via `tcbraster`. Verified by compiling locally against real 30-day data and visually re-comparing against `data/abbott/RodrigoÁlvarez_30-09-2026.pdf`.
+- [x] 3.2 Add the header section (user's name, covered date range -- no birth date) and the time-in-range box (stacked TikZ bar + per-band percentages and targets, fed from `get_glucose_summary_stats`'s `band_percentages`); verify end-to-end in the Podman container against real data that the PDF's time-in-range percentages match the dashboard's own figures for the same range exactly.
+- [x] 3.3 Add the glucose-statistics box (average mg/dL, GMI % and mmol/mol, %CV, fed from `get_glucose_summary_stats`); verify the same way against real data.
+
+## 4. LaTeX template: AGP chart and daily-profile grid
+
+- [x] 4.1 Add the AGP percentile-band chart as a pgfplots filled-band plot fed directly from `get_agp_percentile_bands`; verify end-to-end against real data that the compiled PDF's AGP chart is present and compiles without error for a range spanning at least two days.
+- [x] 4.2 Add the daily-profile grid (one small pgfplots line plot per day, Monday-start week rows, date in the corner of each cell) fed from `get_daily_glucose_profiles`, paginating onto additional pages when the range spans more week-rows than fit on one page; verify against real data for both a short range (fits one page) and a long range (e.g. 90 days, spans multiple pages). Fixed a real bug the user caught in their browser: a first attempt forced a page break every 4 week-rows regardless of available space, cutting a 30-day (5-week-row) report short on page 1 and leaving page 2 almost entirely blank -- removed the forced break and let LaTeX paginate each self-contained week-row naturally; a 30-day range now renders on a single page.
+- [x] 4.3 Verify the "no glucose data in range" case produces a PDF identifying the user and the requested range without a broken/blank report (e.g. an explicit "no data" notice in place of the charts).
+
+## 5. Export route
+
+- [x] 5.1 Add a PDF-export route under `app/routers/dashboard.py` (or a new router) accepting the same `start`/`end` query parameters as `/dashboard`, reusing `_resolve_range`, rendering the `.tex` template, invoking Tectonic via subprocess, and returning the compiled PDF as a downloadable response; verify by curling the route in the Podman container and confirming the response is a valid PDF (`file` reports a PDF, correct `Content-Type`).
+- [x] 5.2 Add a link/button to the dashboard template pointing at the export route for the currently-selected range; verify server-side that the link's `start`/`end` match the currently-displayed range, and note in the task that the link's actual click-through behaviour needs the user's own browser confirmation before this is committed (no browser automation in this environment). Verified server-side: the link's `start`/`end` match the displayed range on both the full page load and the HTMX fragment response (so it updates correctly across range-preset clicks). The actual click-through/download behaviour in a real browser is unverified here -- needs the user's own confirmation, same as the theme toggle.
+- [x] 5.2b Restyled the button per the user's explicit request: a small fixed-position square icon button (📄, no text) next to the dark/light theme toggle, matching its style exactly (same `position: fixed; top: 1rem`, offset to `right: 4rem` so it sits beside the toggle's `right: 1rem`). Verified server-side that the markup renders correctly; the actual visual placement/squareness still needs the user's own browser confirmation.
+
+## 6. End-to-end verification
+
+- [x] 6.1 Generate a PDF for a real multi-week range against the real dev database in the Podman container, and visually compare it (header, time-in-range box, glucose-stats box, AGP chart, daily-profile grid) against the user's own real Abbott/LibreView report at `data/abbott/RodrigoÁlvarez_30-09-2026.pdf` for the same style intent, confirming the three deliberate exclusions (birth date/age, sensor-time-active, clinical pattern commentary) are indeed absent. Verified: generated via the real `/dashboard/export.pdf?start=2026-09-17&end=2026-09-30` route (the exact period Abbott's own report covers) against the real dev database -- same section layout (header, time-in-range bar+table, glucose-stats box, AGP chart, daily-profile grid), and confirmed no birth date, no sensor-time-active percentage, and no clinical pattern commentary appear anywhere in the output.
+- [x] 6.2 Run `/changelogger` then `/commit` once the user has confirmed the exported PDF (an inherently visual, print-quality artefact) looks right.
