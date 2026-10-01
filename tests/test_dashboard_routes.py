@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models import GlucoseReading, HealthMetric, MedicationDose
+from app.routers.dashboard import _resolve_range
+from app.timezone import MEXICO_CITY
 
 
 @pytest.fixture
@@ -44,6 +46,16 @@ def _seed(db_session):
         ]
     )
     db_session.commit()
+
+
+def test_resolve_range_default_today_uses_mexico_city_not_utc():
+    # Regression test: this used to be datetime.utcnow(), so opening the
+    # dashboard late in the CST evening (already past midnight UTC) would
+    # show UTC's next calendar day as "today" (see
+    # mexico-city-local-time's design.md).
+    _start, end = _resolve_range(None, None)
+
+    assert end.date() == datetime.now(MEXICO_CITY).date()
 
 
 def test_dashboard_shows_empty_state_when_nothing_ingested(client):

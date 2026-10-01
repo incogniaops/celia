@@ -13,6 +13,7 @@ from app.health_metrics_sync import (
     _extract_sleep,
     _extract_steps,
     _extract_weight,
+    _parse_google_timestamp,
     sync_health_metrics,
 )
 from app.config import Settings
@@ -63,13 +64,22 @@ _SLEEP_DATA_POINT = {
 }
 
 
+def test_parse_google_timestamp_converts_utc_to_mexico_city():
+    # America/Mexico_City is a fixed UTC-6 offset year-round (see
+    # mexico-city-local-time's design.md) -- no DST complication to test.
+    assert _parse_google_timestamp("2026-09-27T14:25:21.699Z") == datetime(
+        2026, 9, 27, 8, 25, 21, 699000
+    )
+
+
 def test_extract_weight_converts_grams_to_kg():
     metric = _extract_weight(_WEIGHT_DATA_POINT)
     assert metric["metric_type"] == "weight"
     assert metric["value"] == 113.0
     assert metric["unit"] == "kg"
     assert metric["source_package"] == "com.hualai"
-    assert metric["recorded_at"] == datetime(2026, 9, 27, 14, 25, 21, 699000)
+    # 2026-09-27T14:25:21.699Z UTC -> 08:25:21.699 America/Mexico_City (UTC-6)
+    assert metric["recorded_at"] == datetime(2026, 9, 27, 8, 25, 21, 699000)
 
 
 def test_extract_body_fat():
@@ -102,6 +112,8 @@ def test_build_filter_for_daily_type_is_never_empty_on_same_day_resync():
 
 
 def test_extract_daily_resting_heart_rate_uses_date_not_sample_time():
+    # Unaffected by the America/Mexico_City conversion: Google reports this
+    # type as a plain date, with no time-of-day to convert (see design.md).
     metric = _extract_daily_resting_heart_rate(_DAILY_RESTING_HEART_RATE_DATA_POINT)
     assert metric["value"] == 86.0
     assert metric["recorded_at"] == datetime(2026, 7, 18)
@@ -111,7 +123,8 @@ def test_extract_steps():
     metric = _extract_steps(_STEPS_DATA_POINT)
     assert metric["value"] == 18.0
     assert metric["unit"] == "steps"
-    assert metric["recorded_at"] == datetime(2026, 9, 30, 19, 30, 0)
+    # 2026-09-30T19:30:00Z UTC -> 13:30:00 America/Mexico_City (UTC-6)
+    assert metric["recorded_at"] == datetime(2026, 9, 30, 13, 30, 0)
 
 
 def test_extract_sleep_uses_summary_minutes_asleep():

@@ -2,6 +2,18 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- fix: store Google Health API timestamps in America/Mexico_City local
+  time instead of UTC, and compute the dashboard's default date range's
+  "today" from local time too — every other source (LibreView, MyTherapy,
+  Wyze) already stored local time as-is, so Google Health was the one
+  source showing readings under the wrong calendar day; backfilled the
+  5,712 already-synced Google Health rows in the real dev database
+  (excluding daily-resting-heart-rate, a plain date with no time-of-day,
+  and Wyze-sourced rows, already correct), via a two-phase large-offset
+  shift after a direct single-pass update hit a real unique-constraint
+  collision between two `steps` rows; verified against real data showing
+  the exact bug fixed (a reading at 2026-08-19T04:11:00Z, previously
+  shown under 19 August, now correctly shown under 18 August)
 - feat: add the mmol/mol (IFCC) equivalent and a "data spans X of Y days"
   coverage line to the dashboard's A1C card, matching LibreView's own
   "A1C calculada" report screen; verified end-to-end in a Podman container

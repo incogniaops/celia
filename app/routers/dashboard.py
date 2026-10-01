@@ -18,6 +18,7 @@ from app.dashboard_data import (
     has_any_data,
 )
 from app.database import get_db
+from app.timezone import MEXICO_CITY
 
 router = APIRouter(tags=["dashboard"])
 
@@ -36,7 +37,10 @@ def _parse_date(value: str | None) -> datetime | None:
 
 
 def _resolve_range(start: str | None, end: str | None) -> tuple[datetime, datetime]:
-    today = datetime.utcnow()
+    # Mexico_City, not UTC, so the default range's boundary matches the
+    # user's own calendar day regardless of time of day (see
+    # mexico-city-local-time's design.md).
+    today = datetime.now(MEXICO_CITY).replace(tzinfo=None)
     end_dt = _parse_date(end) or today
     start_dt = _parse_date(start) or (end_dt - timedelta(days=_DEFAULT_RANGE_DAYS))
     if start_dt > end_dt:

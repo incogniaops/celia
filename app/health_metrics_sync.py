@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.auth.google import NotAuthorisedError, TokenExchangeError, ensure_valid_access_token
 from app.config import Settings
 from app.repository import get_google_health_credential, insert_health_metrics, record_sync_result
+from app.timezone import MEXICO_CITY
 
 API_BASE = "https://health.googleapis.com/v4/users/me/dataTypes"
 
@@ -49,7 +50,14 @@ def _format_timestamp(value: datetime) -> str:
 
 
 def _parse_google_timestamp(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).replace(tzinfo=None)
+    """Google reports these as true UTC instants; every other source celia
+    ingests (LibreView, MyTherapy, Wyze) already stores local wall-clock
+    time, so this converts to America/Mexico_City before dropping tzinfo,
+    rather than storing the UTC wall-clock time as if it were local (see
+    mexico-city-local-time's design.md).
+    """
+    utc_instant = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return utc_instant.astimezone(MEXICO_CITY).replace(tzinfo=None)
 
 
 def _base_metric(metric_type: str, recorded_at: datetime, value: float | None, unit: str, data_point: dict) -> dict:
