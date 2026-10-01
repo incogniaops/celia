@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models import GlucoseReading, HealthMetric, MedicationDose
-from app.routers.dashboard import _resolve_range
+from app.routers.dashboard import _active_preset, _resolve_range
 from app.timezone import MEXICO_CITY
 
 
@@ -56,6 +56,60 @@ def test_resolve_range_default_today_uses_mexico_city_not_utc():
     _start, end = _resolve_range(None, None)
 
     assert end.date() == datetime.now(MEXICO_CITY).date()
+
+
+@pytest.mark.parametrize("days", [7, 14, 30, 90])
+def test_active_preset_detects_each_preset_ending_today(days):
+    today = datetime.now(MEXICO_CITY).replace(tzinfo=None)
+    start_dt = today.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=days - 1)
+    end_dt = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    assert _active_preset(start_dt, end_dt) == days
+
+
+def test_active_preset_is_none_when_end_is_not_today():
+    today = datetime.now(MEXICO_CITY).replace(tzinfo=None)
+    start_dt = today - timedelta(days=36)
+    end_dt = today - timedelta(days=7)
+
+    assert _active_preset(start_dt, end_dt) is None
+
+
+def test_active_preset_is_none_when_span_matches_no_preset():
+    today = datetime.now(MEXICO_CITY).replace(tzinfo=None)
+    start_dt = today.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=9)
+    end_dt = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    assert _active_preset(start_dt, end_dt) is None
+
+
+def test_dashboard_default_range_checks_30_day_radio(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard")
+
+    assert response.status_code == 200
+    assert 'value="30" onchange="celiaSelectRange(30)" checked' in response.text
+
+
+def test_dashboard_preset_range_checks_matching_radio(client, db_session):
+    _seed(db_session)
+    today = datetime.now(MEXICO_CITY).date()
+    start = today - timedelta(days=6)
+
+    response = client.get("/dashboard", params={"start": start.isoformat(), "end": today.isoformat()})
+
+    assert response.status_code == 200
+    assert 'value="7" onchange="celiaSelectRange(7)" checked' in response.text
+
+
+def test_dashboard_non_preset_range_checks_no_radio(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "checked" not in response.text
 
 
 def test_dashboard_shows_empty_state_when_nothing_ingested(client):

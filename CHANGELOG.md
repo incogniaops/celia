@@ -2,6 +2,15 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: replace the dashboard's manual "From"/"To" date pickers with four
+  one-click range presets (last 7/14/30/90 days), computed client-side in
+  local JS and fired via htmx.ajax(), no new dependency; the matching
+  preset is pre-selected based on the currently-viewed range; fixed a real
+  off-by-one found while wiring this up — the default range's start used
+  a 30-day timedelta, which spans 31 calendar days inclusive, so it never
+  matched the 30-day preset's true span; verified end-to-end in a Podman
+  container against the exact URLs the client-side JS constructs for all
+  four presets
 - fix: store Google Health API timestamps in America/Mexico_City local
   time instead of UTC, and compute the dashboard's default date range's
   "today" from local time too — every other source (LibreView, MyTherapy,

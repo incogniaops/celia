@@ -1,10 +1,35 @@
-<form hx-get="/dashboard" hx-target="#dashboard-content" hx-push-url="true">
-  <fieldset role="group">
-    <input type="date" name="start" value="{{ start }}" aria-label="From">
-    <input type="date" name="end" value="{{ end }}" aria-label="To">
-    <button type="submit">Update</button>
-  </fieldset>
-</form>
+<fieldset role="group" aria-label="Date range">
+  <label>
+    <input type="radio" name="range_preset" value="7" onchange="celiaSelectRange(7)" {% if active_range_days == 7 %}checked{% endif %}>
+    Last 7 days
+  </label>
+  <label>
+    <input type="radio" name="range_preset" value="14" onchange="celiaSelectRange(14)" {% if active_range_days == 14 %}checked{% endif %}>
+    Last 14 days
+  </label>
+  <label>
+    <input type="radio" name="range_preset" value="30" onchange="celiaSelectRange(30)" {% if active_range_days == 30 %}checked{% endif %}>
+    Last 30 days
+  </label>
+  <label>
+    <input type="radio" name="range_preset" value="90" onchange="celiaSelectRange(90)" {% if active_range_days == 90 %}checked{% endif %}>
+    Last 90 days
+  </label>
+</fieldset>
+<script>
+  function celiaSelectRange(days) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - (days - 1));
+    const fmt = (d) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    htmx.ajax("GET", `/dashboard?start=${fmt(start)}&end=${fmt(end)}`, {
+      target: "#dashboard-content",
+      swap: "innerHTML",
+      pushUrl: true,
+    });
+  }
+</script>
 
 <section class="biometric-cards">
   {% for metric_type, metric in biometric_profile.items() %}

@@ -1,0 +1,8 @@
+# Tasks
+
+- [x] 1. Add a function to `app/routers/dashboard.py` that, given the resolved `start_dt`/`end_dt`, returns the matching preset (7/14/30/90) if `end_dt` is today (America/Mexico_City) and the span matches one of the four, else `None`; wire it into `_dashboard_context` as `active_range_days`. Also fixed a real off-by-one found while wiring this up: the default range's start used a 30-day `timedelta` (spanning 31 inclusive calendar days), so it never matched the 30-day preset's true span; changed to `timedelta(days=_DEFAULT_RANGE_DAYS - 1)`.
+- [x] 2. Unit tests: each of the four presets is correctly detected when `end` is today; a non-today `end` or a non-matching span returns `None`.
+- [x] 3. Replace the date-picker `<form>` in `app/templates/dashboard_content.html` with four radio buttons (7/14/30/90 days), a `celiaSelectRange(days)` JS helper computing start/end client-side and firing `htmx.ajax()`, and `{% if active_range_days == N %}checked{% endif %}` on each radio.
+- [x] 4. Integration test: the dashboard route renders with the correct radio marked `checked` for the default (no params) case and for each of the four presets; a non-preset `start`/`end` renders with none checked.
+- [x] 5. Verified end-to-end in the Podman container: requested the exact URLs `celiaSelectRange`'s JS would construct for all four presets (today computed via `date` in TZ=America/Mexico_City) -- each correctly checks its matching radio; the default (no params) load checks "30"; a non-preset custom range checks none. No server errors in any case. (The 90-day preset's computed range, 3 Jul-30 Sept, also matches the exact window from the user's own earlier LibreView A1C screenshot.)
+- [x] 6. Run `/changelogger` then `/commit` once verified.
