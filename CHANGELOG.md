@@ -2,6 +2,16 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- fix: defer both dashboard charts' construction to the next animation
+  frame (plus an explicit resize() as a second safety net), after the
+  user reported the glucose trend chart intermittently rendering at
+  Chart.js's small default size instead of filling its container when
+  switching between date-range presets — Chart.js measures its
+  container synchronously at construction time, and can race the
+  browser's layout pass for a just-swapped-in HTMX fragment; this is a
+  browser-timing issue that can't be reproduced or proven fixed from an
+  automated/headless check, so it applies the standard fix for this
+  class of bug and awaits the user's own confirmation in their browser
 - feat: replace the dashboard's manual "From"/"To" date pickers with four
   one-click range presets (last 7/14/30/90 days), computed client-side in
   local JS and fired via htmx.ajax(), no new dependency; the matching

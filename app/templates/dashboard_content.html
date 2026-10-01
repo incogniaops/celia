@@ -85,23 +85,26 @@
     if (window.celiaGlucoseChart) {
       window.celiaGlucoseChart.destroy();
     }
-    window.celiaGlucoseChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: points.map((p) => p.timestamp),
-        datasets: [{
-          label: "Glucose (mg/dL)",
-          data: points.map((p) => p.value),
-          borderColor: "#2563eb",
-          pointRadius: 0,
-          tension: 0.1,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { x: { display: false } },
-      },
+    requestAnimationFrame(() => {
+      window.celiaGlucoseChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: points.map((p) => p.timestamp),
+          datasets: [{
+            label: "Glucose (mg/dL)",
+            data: points.map((p) => p.value),
+            borderColor: "#2563eb",
+            pointRadius: 0,
+            tension: 0.1,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { x: { display: false } },
+        },
+      });
+      window.celiaGlucoseChart.resize();
     });
   })();
 </script>
@@ -124,23 +127,26 @@
         const m = String(b.minute_of_day % 60).padStart(2, "0");
         return `${h}:${m}`;
       });
-      window.celiaAgpChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            { label: "p95", data: bands.map((b) => b.p95), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.15)", pointRadius: 0, fill: "+1" },
-            { label: "p75", data: bands.map((b) => b.p75), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.35)", pointRadius: 0, fill: "+1" },
-            { label: "Median", data: bands.map((b) => b.median), borderColor: "#2563eb", pointRadius: 0, fill: false },
-            { label: "p25", data: bands.map((b) => b.p25), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.35)", pointRadius: 0, fill: "-1" },
-            { label: "p5", data: bands.map((b) => b.p5), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.15)", pointRadius: 0, fill: "-1" },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { x: { ticks: { maxTicksLimit: 12 } } },
-        },
+      requestAnimationFrame(() => {
+        window.celiaAgpChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              { label: "p95", data: bands.map((b) => b.p95), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.15)", pointRadius: 0, fill: "+1" },
+              { label: "p75", data: bands.map((b) => b.p75), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.35)", pointRadius: 0, fill: "+1" },
+              { label: "Median", data: bands.map((b) => b.median), borderColor: "#2563eb", pointRadius: 0, fill: false },
+              { label: "p25", data: bands.map((b) => b.p25), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.35)", pointRadius: 0, fill: "-1" },
+              { label: "p5", data: bands.map((b) => b.p5), borderColor: "transparent", backgroundColor: "rgba(37,99,235,0.15)", pointRadius: 0, fill: "-1" },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { ticks: { maxTicksLimit: 12 } } },
+          },
+        });
+        window.celiaAgpChart.resize();
       });
     })();
   </script>
