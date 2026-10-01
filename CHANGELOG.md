@@ -2,6 +2,20 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- chore: archive all 12 completed OpenSpec changes (glucose-ingestion
+  through biometric-cards-redesign), syncing every delta into the main
+  specs under openspec/specs/ in dependency order, with an
+  agent-driven merge for each (not a blind copy) since most deltas
+  modified or added to specs that had evolved since they were written;
+  added a new body-composition-ingestion main spec (with a proper
+  Purpose, not left as the TBD placeholder its delta omitted); all
+  seven capability specs pass `openspec validate --specs` with no
+  failures; known pre-existing inconsistency surfaced, not resolved
+  here: dashboard's "Biometric profile source precedence" requirement
+  still claims `health_metrics` is the only stored weight source, which
+  body-composition-ingestion and health-metrics-sync's own
+  MyTherapy-precedence requirement both now contradict — needs a real
+  design decision, not a sync fix
 - docs: reconcile biometric-cards-redesign's proposal.md and design.md
   with the three rounds of implementation that followed the initial
   plan — the "What Changes"/"Impact"/Goals sections still described
