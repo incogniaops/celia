@@ -2,6 +2,9 @@
 
 ## [2026-10-01] - Implement data-sharing as a PDF export
 
+- chore: remove the old openspec/changes/data-sharing-pdf-export/ files --
+  the previous archive commit added their copy under
+  openspec/changes/archive/ but missed staging this deletion
 - chore: archive the data-sharing-pdf-export OpenSpec change, syncing its
   rewritten "Generate a scoped read-only share" requirement (PDF mechanism,
   all six scenarios) into the main data-sharing spec, and removing the two
