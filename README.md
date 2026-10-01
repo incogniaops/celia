@@ -8,6 +8,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![HTMX](https://img.shields.io/badge/HTMX-2.0-3D72D7)
 ![Chart.js](https://img.shields.io/badge/Chart.js-via%20CDN-FF6384?logo=chartdotjs&logoColor=white)
+![LaTeX](https://img.shields.io/badge/LaTeX-Tectonic-008080?logo=latex&logoColor=white)
 ![Podman](https://img.shields.io/badge/Podman%2FDocker-OCI--compliant-892CA0?logo=podman&logoColor=white)
 
 A self-hosted health dashboard that brings a single person's diabetes-related data together in one place, so it can be reviewed and shared without depending on separate, closed vendor ecosystems.
@@ -26,7 +27,9 @@ celia started as a personal project for the México Tech Hub SDD (Spec-Driven De
 
 ## What's built
 
-All four data sources are ingested and verified end-to-end against real data:
+All seven user stories (US-01 – US-07) are built and verified end-to-end against real data.
+
+All four data sources are ingested:
 
 - **FreeStyle Libre** (CSV and/or PDF export from LibreView) — glucose readings, the sole glucose source.
 - **MyTherapy** (CSV archive or monthly PDF report) — medication-adherence data.
@@ -40,8 +43,8 @@ The consolidated dashboard shows, for a chosen date range (one-click 7/14/30/90-
 - Glucose pattern views: a time-in-range summary, an ambulatory glucose profile (AGP) chart, and a monthly glucose calendar.
 - A biometric-and-glucose-summary card row: metabolic-age delta, weight, body fat, BMI, glucose average/%CV and estimated A1C (GMI) — the card row never reveals the user's real chronological age, only the signed delta against metabolic age.
 - A dark/light theme toggle (dark by default), legible in both themes including the charts and the colour-coded table/calendar cells.
-
-**Not yet built:** sharing a read-only view with a doctor (US-05), and the manually-maintained FreeStyle Libre sensor log (US-06). Both remain fully specified but unimplemented.
+- A manually-maintained sensor-log section (which FreeStyle Libre sensor was active for the selected range, and how many days in it are unlogged) — celia's one deliberate exception to "no manual data entry", managed at `/sensor-log`.
+- A downloadable PDF export of the dashboard for the selected range (LaTeX-typeset via Tectonic, styled on the user's own real LibreView AGP report), to print or email to a doctor — no signed link, no account needed on the recipient's side.
 
 The full specification — the anchor for what celia is and does, including user stories, business rules, quality attributes and open decisions — is in [`docs/PS-CELIA-001-Self-Hosted-Diabetes-Dashboard.md`](docs/PS-CELIA-001-Self-Hosted-Diabetes-Dashboard.md). Capability-level behaviour contracts derived from it live under [`openspec/specs/`](openspec/specs/).
 
@@ -59,7 +62,7 @@ celia is self-hosted on the author's own homelab, as a container:
 
 ## Status
 
-Hackathon MVP, specification **Engineering Ready** (v1.2). All seven user stories (US-01 – US-07) are specified; five are built and verified end-to-end against real data (ingestion from all four sources, plus the full consolidated dashboard). Sharing (US-05) and the sensor log (US-06) remain specified but not yet built. See the specification's Open Decisions section (mainly OD-01b, the VM's operating system, and OD-02, the exact share mechanism) for what's still open.
+Hackathon MVP, specification **Engineering Ready** (v1.4). All seven user stories (US-01 – US-07) are specified, built and verified end-to-end against real data. See the specification's Open Decisions section (OD-01b, the VM's operating system) for what's still open.
 
 ## Acknowledgements
 

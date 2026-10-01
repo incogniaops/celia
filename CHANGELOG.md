@@ -2,6 +2,10 @@
 
 ## [2026-10-01] - Implement data-sharing as a PDF export
 
+- docs: bring README.md in line with all seven user stories now being
+  built -- add the sensor-log section and the PDF export to "What's
+  built", drop the stale "not yet built" callout, bump the referenced
+  spec version to v1.4, and add a LaTeX/Tectonic badge
 - docs: bring PS-CELIA-001 (v1.3 -> v1.4) in line with US-06 now being
   built -- the last of the seven user stories, so all of US-01 - US-07
   are built and verified end-to-end against real data; correct
