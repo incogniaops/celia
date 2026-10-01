@@ -2,6 +2,18 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: add a dark/light theme toggle to the dashboard, defaulting to
+  dark when no preference is stored; the choice persists across
+  reloads via localStorage, and the theme is set before first paint to
+  avoid a flash of the wrong theme; scoped to the two Pico.css-styled
+  pages (dashboard.html, dashboard_empty.html) — the three upload pages
+  don't load Pico.css and have no visual theme to toggle; verified
+  server-side in a Podman container that the script/button render
+  once and are absent from the HTMX fragment response, so range-preset
+  clicks don't reset or duplicate them; the flash-free rendering and
+  click-to-toggle behaviour itself are real-browser-only concerns this
+  environment has no browser automation for, same limitation as
+  chart-resize-after-swap
 - docs: bring PS-CELIA-001 (v1.1 -> v1.2) back in line with what was
   actually built, so it can be the anchor spec again — add US-07
   (Wyze body-composition export, the fourth data source, missing
