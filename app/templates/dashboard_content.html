@@ -16,6 +16,13 @@
   {% else %}
   <p>No biometric data yet — <a href="/auth/google/login">connect Google Health</a> to see weight, body fat and heart rate here.</p>
   {% endfor %}
+  {% if glucose_summary %}
+  <article>
+    <header>A1C (estimated)</header>
+    <div class="value">{{ "%.1f"|format(glucose_summary.gmi_percent) }}%</div>
+    <small>Glucose Management Indicator (GMI)</small>
+  </article>
+  {% endif %}
 </section>
 
 <article>
@@ -32,7 +39,6 @@
   </table>
   <p>
     Average: <strong>{{ "%.0f"|format(glucose_summary.average_mgdl) }} mg/dL</strong> &nbsp;
-    GMI: <strong>{{ "%.1f"|format(glucose_summary.gmi_percent) }}%</strong> &nbsp;
     CV: <strong>{{ "%.1f"|format(glucose_summary.cv_percent) }}%</strong>
   </p>
   {% else %}

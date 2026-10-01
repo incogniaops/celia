@@ -38,6 +38,9 @@ def _seed(db_session):
             HealthMetric(
                 metric_type="weight", recorded_at=datetime(2026, 8, 10), value=113.0, unit="kg", raw_json={}
             ),
+            HealthMetric(
+                metric_type="muscle_mass", recorded_at=datetime(2026, 8, 10), value=69.5, unit="kg", raw_json={}
+            ),
         ]
     )
     db_session.commit()
@@ -71,6 +74,35 @@ def test_dashboard_shows_adherence_calendar_with_confirmed_status(client, db_ses
     assert "✅" in response.text
 
 
+def test_dashboard_shows_muscle_mass_card_with_real_data(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "Muscle Mass" in response.text
+    assert "69.5" in response.text
+
+
+def test_dashboard_shows_a1c_card_with_glucose_data(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
+
+    assert response.status_code == 200
+    assert "A1C (estimated)" in response.text
+    assert "Glucose Management Indicator (GMI)" in response.text
+
+
+def test_dashboard_omits_a1c_card_without_glucose_data(client, db_session):
+    _seed(db_session)
+
+    response = client.get("/dashboard", params={"start": "2026-01-01", "end": "2026-01-31"})
+
+    assert response.status_code == 200
+    assert "A1C (estimated)" not in response.text
+
+
 def test_dashboard_shows_time_in_range_summary_with_real_data(client, db_session):
     _seed(db_session)
 
@@ -79,7 +111,7 @@ def test_dashboard_shows_time_in_range_summary_with_real_data(client, db_session
     assert response.status_code == 200
     assert "Time in range" in response.text
     assert "In range (70-180 mg/dL)" in response.text
-    assert "GMI" in response.text
+    assert "CV" in response.text
 
 
 def test_dashboard_omits_time_in_range_summary_when_no_glucose_data(client, db_session):

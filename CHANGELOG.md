@@ -2,6 +2,19 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: add body-composition-ingestion — a stdlib-only (zipfile +
+  ElementTree, no new dependency) parser for the Wyze scale's own
+  "Body Composition Data" .xlsx export, since muscle mass and most other
+  body-composition fields aren't available via the Google Health API;
+  stores every measurement a row has (not just muscle mass), skipping
+  fields the scale marked unread rather than as zero or null, ingests the
+  export's optional "Heart Rate" section too, and only ever reads the
+  first sheet (the logged-in account's own data), never a second profile
+  sharing the same scale; add muscle mass and an estimated A1C (GMI) card
+  to the dashboard's biometric profile; verified end-to-end in a Podman
+  container against the real export (257 data points, re-upload produces
+  zero duplicates, the other profile's data confirmed absent from the
+  database)
 - feat: add three glucose pattern views to the dashboard, inspired by the
   user's own LibreView AGP report — a time-in-range/GMI/%CV summary using
   the standard AGP consensus bands, an AGP percentile-band chart

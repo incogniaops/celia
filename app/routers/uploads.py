@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.parsers.libre import UnrecognisedFileError, parse_libre_csv, parse_libre_pdf, sniff_file_type
 from app.parsers import mytherapy as mytherapy_parser
-from app.repository import insert_glucose_readings, upsert_medication_doses
+from app.parsers import wyze as wyze_parser
+from app.repository import insert_glucose_readings, insert_health_metrics, upsert_medication_doses
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -86,6 +87,34 @@ def upload_mytherapy_export(
             "processed": processed,
             "total_parsed": len(parsed.doses),
             "discarded_row_count": parsed.discarded_row_count,
+            "skipped_row_count": parsed.skipped_row_count,
+            "skipped_reasons": parsed.skipped_reasons,
+        },
+    )
+
+
+@router.get("/wyze", response_class=HTMLResponse)
+def show_wyze_upload_form(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "upload_wyze.html", {})
+
+
+@router.post("/wyze", response_class=HTMLResponse)
+def upload_wyze_export(request: Request, file: UploadFile, db: Session = Depends(get_db)) -> HTMLResponse:
+    content = file.file.read()
+
+    try:
+        parsed = wyze_parser.parse_wyze_export(content)
+    except wyze_parser.UnrecognisedFileError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    inserted = insert_health_metrics(db, parsed.metrics)
+
+    return templates.TemplateResponse(
+        request,
+        "upload_wyze_result.html",
+        {
+            "inserted": inserted,
+            "total_parsed": len(parsed.metrics),
             "skipped_row_count": parsed.skipped_row_count,
             "skipped_reasons": parsed.skipped_reasons,
         },

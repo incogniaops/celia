@@ -1,0 +1,14 @@
+<p>
+  Stored {{ inserted }} new data point{{ "s" if inserted != 1 else "" }}
+  out of {{ total_parsed }} parsed.
+</p>
+{% if skipped_row_count %}
+<p>
+  Skipped {{ skipped_row_count }} malformed row{{ "s" if skipped_row_count != 1 else "" }}:
+</p>
+<ul>
+  {% for reason in skipped_reasons %}
+  <li>{{ reason }}</li>
+  {% endfor %}
+</ul>
+{% endif %}

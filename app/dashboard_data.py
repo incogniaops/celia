@@ -12,9 +12,12 @@ from app.models import GlucoseReading, HealthMetric, MedicationDose
 GLUCOSE_RECORD_TYPES = (0, 1)
 
 # Named only in the dashboard requirement's "current biometric profile" --
-# steps/sleep exist in health_metrics but showing them is a later addition
-# (see design.md Non-Goals), not silently bundled in here.
-BIOMETRIC_METRIC_TYPES = ("weight", "body_fat", "heart_rate", "daily_resting_heart_rate")
+# steps/sleep (and the other Wyze body-composition fields: BMI, body water,
+# lean body mass, bone mass, protein, visceral fat, BMR, metabolic age,
+# skeletal muscle rate, fat content, subcutaneous fat) exist in
+# health_metrics but showing them is a later addition (see design.md
+# Non-Goals), not silently bundled in here.
+BIOMETRIC_METRIC_TYPES = ("weight", "body_fat", "heart_rate", "daily_resting_heart_rate", "muscle_mass")
 
 # Fixed international AGP consensus bands (Battelino et al., 2019) -- the
 # same boundaries the user's own LibreView report uses, not a
