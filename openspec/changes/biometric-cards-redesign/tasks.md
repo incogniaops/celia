@@ -18,3 +18,11 @@
 - [x] 13. Update unit tests for the new `get_age_comparison` return shape (delta only); update integration tests to assert Muscle Mass is absent, BMI renders after Body Fat, and the age card shows only the delta.
 - [x] 14. Verify end-to-end in the Podman container against the real data: confirmed the real delta is exactly `-3` (44 metabolic - 47 real), matching the user's own worked example; card order confirmed as `Metabolic age delta, Weight, Body Fat, BMI, Glucose average / CV, A1C`; Muscle Mass confirmed absent; no server errors.
 - [x] 15. Run `/changelogger` then `/commit` for this revision.
+
+## Revision: card text tidy-up
+
+- [x] 16. Remove "(not shown)" from the metabolic age delta card's caption.
+- [x] 17. Rename "Glucose average / CV" header to "Glucose average".
+- [x] 18. Move the A1C card's mmol/mol figure to its own small line below the percentage; remove the GMI/data-coverage caption lines.
+- [x] 19. Update tests for the new header text and the removed GMI/data-spans lines; verify end-to-end in the Podman container against real data.
+- [x] 20. Run `/changelogger` then `/commit` for this revision.

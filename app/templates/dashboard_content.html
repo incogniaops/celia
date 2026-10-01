@@ -36,7 +36,7 @@
   <article>
     <header>Metabolic age delta</header>
     <div class="value">{{ "%+.0f"|format(age_comparison) }}</div>
-    <small>Metabolic age minus chronological age (not shown)</small>
+    <small>Metabolic age minus chronological age</small>
   </article>
   {% endif %}
   {% if biometric_profile.weight %}
@@ -64,18 +64,14 @@
   {% endif %}
   {% if glucose_summary %}
   <article>
-    <header>Glucose average / CV</header>
+    <header>Glucose average</header>
     <div class="value">{{ "%.0f"|format(glucose_summary.average_mgdl) }} mg/dL</div>
     <small>CV: {{ "%.1f"|format(glucose_summary.cv_percent) }}%</small>
   </article>
   <article>
     <header>A1C (estimated)</header>
-    <div class="value">
-      {{ "%.1f"|format(glucose_summary.gmi_percent) }}%
-      <small>({{ "%.0f"|format(glucose_summary.gmi_mmol_mol) }} mmol/mol)</small>
-    </div>
-    <small>Glucose Management Indicator (GMI)</small><br>
-    <small>Data spans {{ glucose_summary.days_with_data }} of {{ glucose_summary.days_in_range }} days</small>
+    <div class="value">{{ "%.1f"|format(glucose_summary.gmi_percent) }}%</div>
+    <small>({{ "%.0f"|format(glucose_summary.gmi_mmol_mol) }} mmol/mol)</small>
   </article>
   {% endif %}
 </section>

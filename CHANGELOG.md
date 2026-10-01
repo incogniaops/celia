@@ -2,6 +2,11 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: tidy up the biometric-card text — drop the "(not shown)" aside
+  from the metabolic-age-delta card, rename "Glucose average / CV" to
+  "Glucose average", and move the A1C card's mmol/mol figure onto its
+  own small line below the percentage instead of inline beside it;
+  remove the GMI/data-coverage caption lines from the A1C card entirely
 - feat: revise the biometric-card row further — drop the Muscle Mass
   card (still ingested and stored, just no longer shown), move BMI to
   after Body Fat, and show only the metabolic-age-minus-chronological-age

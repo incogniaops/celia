@@ -34,7 +34,7 @@ The system SHALL show glucose readings as a trend line, with insulin/carbohydrat
 - **THEN** no Heart Rate or Daily Resting Heart Rate card is shown, even though both continue to be synced and stored as before
 
 ### Requirement: Time-in-range and glucose-control summary
-The system SHALL show, for the selected range, the percentage of glucose readings falling in each of the five standard AGP bands (very low <54 mg/dL, low 54-69 mg/dL, in range 70-180 mg/dL, high 181-250 mg/dL, very high >250 mg/dL). The average glucose, the glucose coefficient of variation (%CV) and the Glucose Management Indicator (GMI, an estimated A1c, in both percentage and mmol/mol, with the data-coverage detail from `a1c-detail-view`) are each shown as their own card in the biometric-and-glucose-summary row, not repeated here.
+The system SHALL show, for the selected range, the percentage of glucose readings falling in each of the five standard AGP bands (very low <54 mg/dL, low 54-69 mg/dL, in range 70-180 mg/dL, high 181-250 mg/dL, very high >250 mg/dL). The average glucose, the glucose coefficient of variation (%CV) and the Glucose Management Indicator (GMI, an estimated A1c, as a percentage with the mmol/mol equivalent on its own line below it) are each shown as their own card in the biometric-and-glucose-summary row, not repeated here. `a1c-detail-view`'s data-coverage detail (days with data out of days in range) is still computed but no longer shown on the card.
 
 #### Scenario: Readings exist in the selected range
 - **WHEN** the user opens the dashboard and glucose readings exist in the selected range

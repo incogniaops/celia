@@ -198,7 +198,7 @@ def test_dashboard_shows_glucose_average_cv_card_and_no_longer_repeats_in_time_i
     response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
 
     assert response.status_code == 200
-    assert "<header>Glucose average / CV</header>" in response.text
+    assert "<header>Glucose average</header>" in response.text
     assert "Average: <strong>" not in response.text
 
 
@@ -209,9 +209,9 @@ def test_dashboard_shows_a1c_card_with_glucose_data(client, db_session):
 
     assert response.status_code == 200
     assert "A1C (estimated)" in response.text
-    assert "Glucose Management Indicator (GMI)" in response.text
     assert "mmol/mol" in response.text
-    assert "Data spans" in response.text
+    assert "Glucose Management Indicator (GMI)" not in response.text
+    assert "Data spans" not in response.text
 
 
 def test_dashboard_omits_a1c_card_without_glucose_data(client, db_session):
