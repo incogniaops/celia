@@ -298,28 +298,25 @@ def test_get_bmi_is_none_without_weight():
     assert get_bmi({}, height_m=1.80) is None
 
 
-def test_get_age_comparison_includes_metabolic_age_when_present():
+def test_get_age_comparison_returns_only_the_delta_not_real_age():
+    today = datetime.now(MEXICO_CITY).date()
+    # Born exactly 50 years ago today, so real_age is deterministic.
+    birth_date = date(today.year - 50, today.month, today.day)
     profile = {
         "metabolic_age": HealthMetric(
-            metric_type="metabolic_age", recorded_at=datetime(2026, 8, 20), value=44, raw_json={}
+            metric_type="metabolic_age", recorded_at=datetime(2026, 8, 20), value=47, raw_json={}
         )
     }
-    birth_date = date(1990, 6, 15)
 
-    comparison = get_age_comparison(profile, birth_date)
+    delta = get_age_comparison(profile, birth_date)
 
-    today = datetime.now(MEXICO_CITY).date()
-    assert comparison["metabolic_age"] == 44.0
-    assert comparison["real_age"] == today.year - birth_date.year - (
-        (today.month, today.day) < (birth_date.month, birth_date.day)
-    )
+    # 47 (metabolic) - 50 (real) == -3; only this delta is ever returned,
+    # never the real age itself (see design.md).
+    assert delta == -3.0
 
 
-def test_get_age_comparison_metabolic_age_none_when_absent():
-    comparison = get_age_comparison({}, date(1990, 6, 15))
-
-    assert comparison["metabolic_age"] is None
-    assert isinstance(comparison["real_age"], int)
+def test_get_age_comparison_none_when_no_metabolic_age_data():
+    assert get_age_comparison({}, date(1990, 6, 15)) is None
 
 
 def test_has_any_data_false_when_all_tables_empty(db_session):

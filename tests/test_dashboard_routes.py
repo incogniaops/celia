@@ -41,6 +41,9 @@ def _seed(db_session):
                 metric_type="weight", recorded_at=datetime(2026, 8, 10), value=113.0, unit="kg", raw_json={}
             ),
             HealthMetric(
+                metric_type="body_fat", recorded_at=datetime(2026, 8, 10), value=34.4, unit="%", raw_json={}
+            ),
+            HealthMetric(
                 metric_type="muscle_mass", recorded_at=datetime(2026, 8, 10), value=69.5, unit="kg", raw_json={}
             ),
             HealthMetric(
@@ -143,17 +146,16 @@ def test_dashboard_shows_adherence_calendar_with_confirmed_status(client, db_ses
     assert "✅" in response.text
 
 
-def test_dashboard_shows_muscle_mass_card_with_real_data(client, db_session):
+def test_dashboard_no_longer_shows_muscle_mass_card(client, db_session):
     _seed(db_session)
 
     response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
 
     assert response.status_code == 200
-    assert "Muscle Mass" in response.text
-    assert "69.5" in response.text
+    assert "Muscle Mass" not in response.text
 
 
-def test_dashboard_shows_bmi_card(client, db_session):
+def test_dashboard_shows_bmi_card_after_body_fat(client, db_session):
     _seed(db_session)
 
     response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
@@ -161,16 +163,23 @@ def test_dashboard_shows_bmi_card(client, db_session):
     assert response.status_code == 200
     assert "<header>BMI</header>" in response.text
     assert "34.9" in response.text  # 113.0 / PROFILE_HEIGHT_M (test default 1.80)**2, rounded
+    assert response.text.index("<header>Body Fat</header>") < response.text.index("<header>BMI</header>")
 
 
-def test_dashboard_shows_age_comparison_card(client, db_session):
+def test_dashboard_shows_age_comparison_delta_not_real_age(client, db_session):
     _seed(db_session)
 
     response = client.get("/dashboard", params={"start": "2026-08-01", "end": "2026-08-31"})
 
     assert response.status_code == 200
-    assert "Metabolic vs real age" in response.text
-    assert "44" in response.text
+    assert "Metabolic age delta" in response.text
+    # metabolic_age (44, seeded) - real_age (computed from PROFILE_BIRTH_DATE
+    # test default 2000-01-01) -- only the delta appears, never a standalone
+    # real-age figure.
+    today = datetime.now(MEXICO_CITY).date()
+    real_age = today.year - 2000 - ((today.month, today.day) < (1, 1))
+    expected_delta = 44 - real_age
+    assert f"{expected_delta:+d}" in response.text
 
 
 def test_dashboard_no_longer_shows_heart_rate_cards(client, db_session):

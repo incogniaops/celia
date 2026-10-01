@@ -9,3 +9,12 @@
 - [x] 7. Integration tests: the dashboard shows the seven cards in order with real-shaped data, no longer shows Heart Rate/Daily Resting Heart Rate cards, and the "Time in range" article no longer repeats average/%CV.
 - [x] 8. Verified end-to-end in the Podman container against the real data: card order is exactly `BMI, Metabolic vs real age, Weight, Muscle Mass, Body Fat, Glucose average / CV, A1C (estimated)`; BMI (33.7) independently computed from weight/height matches the Wyze-stored BMI value exactly; age comparison shows 44 (metabolic) vs 47 (real, from the real birth date); zero Heart Rate references, zero duplicate Average text in Time in range; no server errors. Re-verified after moving height/birth date to `PROFILE_HEIGHT_M`/`PROFILE_BIRTH_DATE` in the real (gitignored) `.env` -- `compose.yaml` and `.env.example` updated to match, same figures confirmed again post-rebuild.
 - [x] 9. Run `/changelogger` then `/commit` once verified.
+
+## Revision: drop muscle mass, reorder BMI, show only the age delta
+
+- [x] 10. Remove `muscle_mass` from `BIOMETRIC_METRIC_TYPES` (still ingested via body-composition-ingestion, just not fetched for the dashboard).
+- [x] 11. Change `get_age_comparison` to return only `metabolic_age - real_age` (a single `float | None`), never the real age itself; update its one caller in `app/routers/dashboard.py` (no shape change needed there, same variable name).
+- [x] 12. Reorder and edit `app/templates/dashboard_content.html`'s cards: metabolic age delta, weight, body fat, BMI, glucose average/%CV, A1C; remove the Muscle Mass card; update the age card to show only the signed delta.
+- [x] 13. Update unit tests for the new `get_age_comparison` return shape (delta only); update integration tests to assert Muscle Mass is absent, BMI renders after Body Fat, and the age card shows only the delta.
+- [x] 14. Verify end-to-end in the Podman container against the real data: confirmed the real delta is exactly `-3` (44 metabolic - 47 real), matching the user's own worked example; card order confirmed as `Metabolic age delta, Weight, Body Fat, BMI, Glucose average / CV, A1C`; Muscle Mass confirmed absent; no server errors.
+- [x] 15. Run `/changelogger` then `/commit` for this revision.

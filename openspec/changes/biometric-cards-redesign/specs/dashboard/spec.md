@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Consolidated, time-aligned view
-The system SHALL show glucose readings as a trend line, with insulin/carbohydrate markers aligned to the same timeline, a medication-adherence calendar (one row per medication, one column per day in the selected range, a status per cell) for the selected range, and a biometric-and-glucose-summary card row alongside it, in this order: BMI, metabolic age vs chronological age, weight, muscle mass, body fat, glucose average/%CV, and estimated A1C (GMI) -- each as its own card.
+The system SHALL show glucose readings as a trend line, with insulin/carbohydrate markers aligned to the same timeline, a medication-adherence calendar (one row per medication, one column per day in the selected range, a status per cell) for the selected range, and a biometric-and-glucose-summary card row alongside it, in this order: metabolic age delta, weight, body fat, BMI, glucose average/%CV, and estimated A1C (GMI) -- each as its own card. Muscle mass is not shown as a card (though it continues to be ingested and stored).
 
 #### Scenario: Data from at least one source is available
 - **WHEN** the user opens the dashboard and at least one source has ingested data
@@ -23,7 +23,11 @@ The system SHALL show glucose readings as a trend line, with insulin/carbohydrat
 
 #### Scenario: Metabolic age is available from the Wyze scale
 - **WHEN** at least one metabolic-age data point has been ingested (from the Wyze body-composition export)
-- **THEN** the metabolic-age-vs-real-age card shows it alongside the chronological age computed from the user's fixed birth date
+- **THEN** the metabolic age delta card shows the metabolic age minus the chronological age computed from the user's fixed birth date, as a single signed number -- never the chronological age itself, so the dashboard never reveals the user's real age even indirectly
+
+#### Scenario: No metabolic age data is available
+- **WHEN** no metabolic-age data point has been ingested
+- **THEN** the metabolic age delta card is omitted, rather than showing a delta against a missing value
 
 #### Scenario: Heart rate and resting heart rate are no longer shown
 - **WHEN** the user opens the dashboard

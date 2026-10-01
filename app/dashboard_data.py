@@ -13,14 +13,15 @@ from app.timezone import MEXICO_CITY
 GLUCOSE_RECORD_TYPES = (0, 1)
 
 # Named only in the dashboard requirement's "current biometric profile" --
-# heart_rate/daily_resting_heart_rate keep syncing (health-metrics-sync is
-# unaffected) but are no longer shown on the dashboard (see
-# biometric-cards-redesign's design.md); steps/sleep and the other Wyze
-# body-composition fields (BMI, body water, lean body mass, bone mass,
-# protein, visceral fat, BMR, skeletal muscle rate, fat content,
-# subcutaneous fat) exist in health_metrics but showing them is a later
-# addition, not silently bundled in here.
-BIOMETRIC_METRIC_TYPES = ("weight", "body_fat", "muscle_mass", "metabolic_age")
+# heart_rate/daily_resting_heart_rate/muscle_mass keep syncing
+# (health-metrics-sync and body-composition-ingestion are unaffected) but
+# are no longer shown on the dashboard (see biometric-cards-redesign's
+# design.md); steps/sleep and the other Wyze body-composition fields (BMI,
+# body water, lean body mass, bone mass, protein, visceral fat, BMR,
+# skeletal muscle rate, fat content, subcutaneous fat) exist in
+# health_metrics but showing them is a later addition, not silently
+# bundled in here.
+BIOMETRIC_METRIC_TYPES = ("weight", "body_fat", "metabolic_age")
 
 # Fixed international AGP consensus bands (Battelino et al., 2019) -- the
 # same boundaries the user's own LibreView report uses, not a
@@ -273,20 +274,21 @@ def get_bmi(biometric_profile: dict[str, HealthMetric], height_m: float) -> floa
     return float(weight.value) / (height_m**2)
 
 
-def get_age_comparison(biometric_profile: dict[str, HealthMetric], birth_date: date) -> dict:
-    """Chronological age (from `birth_date`, as of today in
-    America/Mexico_City) alongside the Wyze scale's metabolic age, when
-    available (see design.md). `birth_date` comes from Settings
-    (PROFILE_BIRTH_DATE), not hardcoded here.
+def get_age_comparison(biometric_profile: dict[str, HealthMetric], birth_date: date) -> float | None:
+    """Metabolic age (Wyze-sourced) minus chronological age (from
+    `birth_date`, as of today in America/Mexico_City) -- only the delta is
+    returned, never the chronological age itself, so the dashboard never
+    displays it even indirectly (see design.md). `birth_date` comes from
+    Settings (PROFILE_BIRTH_DATE), not hardcoded here. None if there is no
+    metabolic-age data to compare against.
     """
+    metabolic_age = biometric_profile.get("metabolic_age")
+    if metabolic_age is None or metabolic_age.value is None:
+        return None
+
     today = datetime.now(MEXICO_CITY).date()
     real_age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-
-    metabolic_age = biometric_profile.get("metabolic_age")
-    return {
-        "real_age": real_age,
-        "metabolic_age": float(metabolic_age.value) if metabolic_age and metabolic_age.value is not None else None,
-    }
+    return float(metabolic_age.value) - real_age
 
 
 def has_any_data(db: Session) -> bool:

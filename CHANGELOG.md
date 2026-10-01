@@ -2,6 +2,16 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- feat: revise the biometric-card row further — drop the Muscle Mass
+  card (still ingested and stored, just no longer shown), move BMI to
+  after Body Fat, and show only the metabolic-age-minus-chronological-age
+  delta (e.g. "-3") instead of both ages side by side, so the dashboard
+  never reveals the real age even indirectly — get_age_comparison now
+  returns only the signed delta, never the real age itself, closing the
+  same privacy gap PROFILE_BIRTH_DATE's move to an environment variable
+  addressed in source control, now also addressed in the rendered page;
+  verified end-to-end in a Podman container against real data — the
+  real delta computes to exactly -3, matching the user's own expectation
 - feat: redesign the dashboard's top biometric-card row — drop the Heart
   Rate and Daily Resting Heart Rate cards (still synced and stored,
   just no longer shown), add a BMI card computed independently from

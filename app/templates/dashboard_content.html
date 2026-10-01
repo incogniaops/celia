@@ -32,20 +32,11 @@
 </script>
 
 <section class="biometric-cards">
-  {% if bmi is not none %}
+  {% if age_comparison is not none %}
   <article>
-    <header>BMI</header>
-    <div class="value">{{ "%.1f"|format(bmi) }}</div>
-  </article>
-  {% endif %}
-  {% if age_comparison %}
-  <article>
-    <header>Metabolic vs real age</header>
-    <div class="value">
-      {{ "%.0f"|format(age_comparison.metabolic_age) if age_comparison.metabolic_age is not none else "—" }}
-      vs {{ age_comparison.real_age }}
-    </div>
-    <small>Metabolic age vs chronological age</small>
+    <header>Metabolic age delta</header>
+    <div class="value">{{ "%+.0f"|format(age_comparison) }}</div>
+    <small>Metabolic age minus chronological age (not shown)</small>
   </article>
   {% endif %}
   {% if biometric_profile.weight %}
@@ -55,13 +46,6 @@
     <small>{{ biometric_profile.weight.recorded_at.date().isoformat() }}</small>
   </article>
   {% endif %}
-  {% if biometric_profile.muscle_mass %}
-  <article>
-    <header>Muscle Mass</header>
-    <div class="value">{{ "%.1f"|format(biometric_profile.muscle_mass.value) }} {{ biometric_profile.muscle_mass.unit or "" }}</div>
-    <small>{{ biometric_profile.muscle_mass.recorded_at.date().isoformat() }}</small>
-  </article>
-  {% endif %}
   {% if biometric_profile.body_fat %}
   <article>
     <header>Body Fat</header>
@@ -69,8 +53,14 @@
     <small>{{ biometric_profile.body_fat.recorded_at.date().isoformat() }}</small>
   </article>
   {% endif %}
-  {% if not biometric_profile.weight and not biometric_profile.muscle_mass and not biometric_profile.body_fat %}
-  <p>No biometric data yet — <a href="/auth/google/login">connect Google Health</a> or <a href="/uploads/wyze">upload a Wyze export</a> to see weight, body fat and muscle mass here.</p>
+  {% if bmi is not none %}
+  <article>
+    <header>BMI</header>
+    <div class="value">{{ "%.1f"|format(bmi) }}</div>
+  </article>
+  {% endif %}
+  {% if not biometric_profile.weight and not biometric_profile.body_fat %}
+  <p>No biometric data yet — <a href="/auth/google/login">connect Google Health</a> or <a href="/uploads/wyze">upload a Wyze export</a> to see weight and body fat here.</p>
   {% endif %}
   {% if glucose_summary %}
   <article>

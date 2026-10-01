@@ -27,6 +27,14 @@ The top card row currently renders from a generic loop over `get_current_biometr
 
 **The generic metric-type loop is replaced with explicit per-card template blocks**, each independently guarded (`{% if %}`) by whether its underlying data exists -- matches the existing pattern the A1C card already uses, rather than extending the generic loop with special-cased ordering logic that would be harder to follow than just writing the seven cards out directly.
 
+## Revision: muscle mass dropped, BMI reordered, age shown only as a delta
+
+After initial implementation and verification, the user asked for three further adjustments to the same card row:
+
+- **Drop the Muscle Mass card** entirely (still ingested and stored, same treatment already given to heart rate).
+- **Move BMI to after Body Fat**, not first. Final order: metabolic age delta, weight, body fat, BMI, glucose average/%CV, A1C.
+- **Show only the metabolic-age-vs-real-age *delta*, never either age on its own.** The original "44 vs 47" card displayed the real (chronological) age directly -- exactly the detail `PROFILE_BIRTH_DATE` was introduced to keep out of source control, now also kept off the rendered page itself. `get_age_comparison` was changed to compute and return only `metabolic_age - real_age` (e.g. `-3`), never the real age; the template only ever receives this single signed number, so there is no code path -- not even an unused template variable -- through which the real age could leak into the rendered HTML.
+
 ## Risks / Trade-offs
 
 - **A future second user, or a house move, would need a code change to update height/birth date/timezone** -- accepted, consistent with this project's existing single-user, single-location scope (see `mexico-city-local-time`'s own equivalent trade-off).
