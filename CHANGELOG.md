@@ -2,6 +2,15 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- docs: reconcile biometric-cards-redesign's proposal.md and design.md
+  with the three rounds of implementation that followed the initial
+  plan — the "What Changes"/"Impact"/Goals sections still described
+  only the first draft (BMI first, Muscle Mass included, both ages
+  shown, GMI caption lines present), while the actual shipped behaviour
+  had moved on through two further revisions; updated them to state the
+  final card order and content directly, added the missing third
+  revision's design rationale, and corrected the Time-in-range spec
+  delta's wording to match the renamed "Glucose average" card
 - feat: tidy up the biometric-card text — drop the "(not shown)" aside
   from the metabolic-age-delta card, rename "Glucose average / CV" to
   "Glucose average", and move the A1C card's mmol/mol figure onto its

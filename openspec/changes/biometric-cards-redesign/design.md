@@ -6,14 +6,14 @@ The top card row currently renders from a generic loop over `get_current_biometr
 
 ## Goals / Non-Goals
 
-**Goals:**
-- Exact card order: BMI, metabolic/real age, weight, muscle mass, body fat, glucose average/%CV, A1C.
-- Compute BMI and chronological age from fixed personal constants, not a new ingestion source.
+**Goals (final state, after the two revisions below):**
+- Exact card order: metabolic age delta, weight, body fat, BMI, glucose average, A1C.
+- Compute BMI and the age delta from fixed personal facts (height, birth date), not a new ingestion source, and never expose the chronological age itself.
 - Remove duplication: glucose average/%CV moves from the "Time in range" article's text into its own top card (the same move `a1c-detail-view` already made for GMI).
 
 **Non-Goals:**
-- Letting the user edit height/birth date through the UI -- these are one-time constants in code, like the project's existing fixed `America/Mexico_City` timezone, not a settings feature.
-- Removing `heart_rate`/`daily_resting_heart_rate` from `health-metrics-sync` itself -- they keep syncing and being stored, simply no longer shown on the dashboard (someone could still query `health_metrics` directly, or a future change could bring them back).
+- Letting the user edit height/birth date through the UI -- these are one-time environment variables, like the project's existing fixed `America/Mexico_City` timezone constant, not a settings feature.
+- Removing `heart_rate`/`daily_resting_heart_rate`/`muscle_mass` from `health-metrics-sync`/`body-composition-ingestion` themselves -- they keep syncing and being stored, simply no longer shown on the dashboard (someone could still query `health_metrics` directly, or a future change could bring any of them back).
 
 ## Decisions
 
@@ -34,6 +34,14 @@ After initial implementation and verification, the user asked for three further 
 - **Drop the Muscle Mass card** entirely (still ingested and stored, same treatment already given to heart rate).
 - **Move BMI to after Body Fat**, not first. Final order: metabolic age delta, weight, body fat, BMI, glucose average/%CV, A1C.
 - **Show only the metabolic-age-vs-real-age *delta*, never either age on its own.** The original "44 vs 47" card displayed the real (chronological) age directly -- exactly the detail `PROFILE_BIRTH_DATE` was introduced to keep out of source control, now also kept off the rendered page itself. `get_age_comparison` was changed to compute and return only `metabolic_age - real_age` (e.g. `-3`), never the real age; the template only ever receives this single signed number, so there is no code path -- not even an unused template variable -- through which the real age could leak into the rendered HTML.
+
+## Revision: card text tidy-up
+
+A further round of user feedback, purely presentational, with no data/logic changes:
+
+- The age-delta card's caption dropped the parenthetical "(not shown)" -- it explained *why* the design omits the real age, but reads as an odd aside once the card itself is self-evidently just a delta; the omission is already documented here in design.md, not something the card's own caption needs to justify.
+- "Glucose average / CV" shortened to "Glucose average" as the header -- the card's `<small>` line already reads "CV: X%", so the header didn't need to repeat it.
+- The A1C card's mmol/mol figure moved from inline beside the percentage to its own `<small>` line below it (matching the same value/small-caption layout every other card already uses), and the GMI/data-coverage caption lines (`"Glucose Management Indicator (GMI)"`, `"Data spans X of Y days"`) were removed from the card entirely -- `get_glucose_summary_stats` still computes `days_with_data`/`days_in_range` (no change there), simply not rendered.
 
 ## Risks / Trade-offs
 

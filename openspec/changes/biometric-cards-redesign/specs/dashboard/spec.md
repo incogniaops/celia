@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Consolidated, time-aligned view
-The system SHALL show glucose readings as a trend line, with insulin/carbohydrate markers aligned to the same timeline, a medication-adherence calendar (one row per medication, one column per day in the selected range, a status per cell) for the selected range, and a biometric-and-glucose-summary card row alongside it, in this order: metabolic age delta, weight, body fat, BMI, glucose average/%CV, and estimated A1C (GMI) -- each as its own card. Muscle mass is not shown as a card (though it continues to be ingested and stored).
+The system SHALL show glucose readings as a trend line, with insulin/carbohydrate markers aligned to the same timeline, a medication-adherence calendar (one row per medication, one column per day in the selected range, a status per cell) for the selected range, and a biometric-and-glucose-summary card row alongside it, in this order: metabolic age delta, weight, body fat, BMI, glucose average (with %CV shown alongside it), and estimated A1C (GMI) -- each as its own card. Muscle mass is not shown as a card (though it continues to be ingested and stored).
 
 #### Scenario: Data from at least one source is available
 - **WHEN** the user opens the dashboard and at least one source has ingested data
