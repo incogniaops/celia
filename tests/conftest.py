@@ -14,6 +14,7 @@ os.environ.setdefault("GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent
 os.environ.setdefault("GOOGLE_CLIENT_SECRET", "test-client-secret")
 os.environ.setdefault("PROFILE_HEIGHT_M", "1.80")
 os.environ.setdefault("PROFILE_BIRTH_DATE", "2000-01-01")
+os.environ.setdefault("PROFILE_NAME", "Test User")
 
 if "_test" not in os.environ["DATABASE_URL"].rsplit("/", 1)[-1]:
     raise RuntimeError(

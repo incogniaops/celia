@@ -16,6 +16,9 @@
     Last 90 days
   </label>
 </fieldset>
+<a href="/dashboard/export.pdf?start={{ start }}&end={{ end }}" role="button" download
+   aria-label="Download PDF report for this range"
+   class="celia-fab celia-fab-download">⬇️</a>
 <script>
   function celiaChartTextColor() {
     return document.documentElement.getAttribute("data-theme") === "dark" ? "#e5e7eb" : "#374151";

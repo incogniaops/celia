@@ -1,0 +1,159 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1.4cm]{geometry}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween,groupplots}
+\usepackage[most]{tcolorbox}
+\usepackage{fontspec}
+% Latin Modern Sans, loaded by exact bundled .otf filename rather than by
+% font name -- this sandboxed build has no system fontconfig database for
+% fontspec's usual by-name lookup (confirmed empirically: \setmainfont{Latin
+% Modern Sans} fails with "cannot be found" even though the files exist and
+% Tectonic fetches them fine by literal filename via kpathsea).
+\setmainfont{lmsans10-regular.otf}[
+  UprightFont = *,
+  BoldFont = lmsans10-bold.otf,
+  ItalicFont = lmsans10-oblique.otf,
+  BoldItalicFont = lmsans10-boldoblique.otf,
+]
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+% Abbott/LibreView-style shaded panel, used for every section below (see
+% design.md) -- light grey background, no visible border, bold left-aligned
+% title, rounded corners.
+\tcbset{
+  panel/.style={
+    colback=gray!6, colframe=gray!6, coltitle=black,
+    fonttitle=\bfseries, boxrule=0pt, arc=1.5mm,
+    left=4mm, right=4mm, top=2mm, bottom=3mm,
+  }
+}
+
+\begin{document}
+
+\noindent
+\begin{minipage}[t]{0.7\textwidth}
+{\LARGE\bfseries Reporte de glucosa}\\[0.3em]
+\VAR{profile_name|latex_escape}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.25\textwidth}
+\raggedleft
+{\large\bfseries celia}
+\end{minipage}
+
+\vspace{0.4em}
+
+\begin{tcolorbox}[colback=gray!10, colframe=gray!10, boxrule=0pt, arc=2mm, left=4mm, right=4mm, top=1.5mm, bottom=1.5mm]
+\VAR{range_days} días \textbullet{} \VAR{start_date} -- \VAR{end_date}
+\end{tcolorbox}
+
+\vspace{0.6em}
+
+\BLOCK{ if not has_data }
+\begin{tcolorbox}[panel, title=Sin datos]
+No hay lecturas de glucosa en el rango seleccionado.
+\end{tcolorbox}
+\BLOCK{ else }
+
+\begin{tcbraster}[raster columns=2, raster equal height, raster column skip=4mm]
+\begin{tcolorbox}[panel, title=Tiempo en los rangos]
+\begin{tikzpicture}[baseline]
+\def\barwidth{0.9cm}
+\def\barheight{4cm}
+\draw[gray] (0,0) rectangle (\barwidth,\barheight);
+\BLOCK{ for segment in band_segments }
+\fill[\VAR{segment.color}] (0,\VAR{segment.y0}) rectangle (\barwidth,\VAR{segment.y0 + segment.height});
+\BLOCK{ endfor }
+\end{tikzpicture}
+\hspace{0.5em}
+\small
+\begin{tabular}{@{}lrr@{}}
+\BLOCK{ for band in band_order }
+\VAR{band_labels[band]|latex_escape} & \VAR{"%.0f"|format(glucose_summary.band_percentages[band])}\% & Obj. \VAR{band_targets[band]|latex_escape} \\
+\BLOCK{ endfor }
+\end{tabular}
+\end{tcolorbox}
+\begin{tcolorbox}[panel, title=Datos de medición de glucosa]
+\small
+\begin{tabular}{@{}ll@{}}
+Glucosa promedio & \VAR{"%.0f"|format(glucose_summary.average_mgdl)}\ mg/dL \\
+GMI (A1C estimado) & \VAR{"%.1f"|format(glucose_summary.gmi_percent)}\% / \VAR{"%.0f"|format(glucose_summary.gmi_mmol_mol)}\ mmol/mol \\
+Variabilidad (\%CV) & \VAR{"%.1f"|format(glucose_summary.cv_percent)}\% \\
+\end{tabular}
+\end{tcolorbox}
+\end{tcbraster}
+
+\vspace{0.6em}
+
+\begin{tcolorbox}[panel, title=Perfil ambulatorio de glucosa (AGP)]
+\BLOCK{ if agp_series }
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=5cm,
+  xmin=0, xmax=1440,
+  xtick={0,360,720,1080,1440},
+  xticklabels={00:00,06:00,12:00,18:00,24:00},
+  ymin=0, ymax=350,
+  ylabel={mg/dL},
+  axis lines=left,
+]
+\addplot[name path=p95curve, draw=none] coordinates {
+  \BLOCK{ for b in agp_series }(\VAR{b.minute_of_day},\VAR{b.p95})\BLOCK{ endfor }
+};
+\addplot[name path=p75curve, draw=none] coordinates {
+  \BLOCK{ for b in agp_series }(\VAR{b.minute_of_day},\VAR{b.p75})\BLOCK{ endfor }
+};
+\addplot[name path=p25curve, draw=none] coordinates {
+  \BLOCK{ for b in agp_series }(\VAR{b.minute_of_day},\VAR{b.p25})\BLOCK{ endfor }
+};
+\addplot[name path=p5curve, draw=none] coordinates {
+  \BLOCK{ for b in agp_series }(\VAR{b.minute_of_day},\VAR{b.p5})\BLOCK{ endfor }
+};
+\addplot[blue!15] fill between[of=p95curve and p5curve];
+\addplot[blue!35] fill between[of=p75curve and p25curve];
+\addplot[thick, blue] coordinates {
+  \BLOCK{ for b in agp_series }(\VAR{b.minute_of_day},\VAR{b.median})\BLOCK{ endfor }
+};
+\end{axis}
+\end{tikzpicture}
+\BLOCK{ else }
+Se necesitan al menos dos días de lecturas en el rango para mostrar un patrón.
+\BLOCK{ endif }
+\end{tcolorbox}
+
+\vspace{0.6em}
+
+\begin{tcolorbox}[panel, title=Perfiles de glucosa diarios]
+\BLOCK{ for week in daily_profile_weeks }
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=7 by 1, horizontal sep=0.25cm},
+  width=2.5cm, height=2cm,
+  xmin=0, xmax=1430,
+  xtick=\empty, ytick=\empty,
+  ymin=40, ymax=250,
+  axis line style={gray},
+]
+\BLOCK{ for cell in week }
+\nextgroupplot[title={\VAR{cell.date.day if cell else ""}},title style={font=\tiny}]
+\BLOCK{ if cell and cell.points }
+\addplot[blue, thin, mark=none] coordinates {
+  \BLOCK{ for minute, value in cell.points }(\VAR{minute},\VAR{value})\BLOCK{ endfor }
+};
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\end{groupplot}
+\end{tikzpicture}\\[0.15em]
+\BLOCK{ endfor }
+\end{tcolorbox}
+
+\BLOCK{ endif }
+
+\vspace{0.6em}
+{\small\color{gray} Generado por celia el \VAR{generated_date}.}
+\end{document}

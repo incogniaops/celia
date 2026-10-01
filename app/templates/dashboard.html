@@ -16,10 +16,17 @@
     .biometric-cards article { margin: 0; text-align: center; }
     .biometric-cards .value { font-size: 1.5rem; font-weight: 600; }
     .biometric-cards small { color: var(--pico-muted-color); }
+    .celia-fab {
+      position: fixed; top: 1rem; z-index: 10;
+      width: 2.5rem; height: 2.5rem; line-height: 2.5rem;
+      padding: 0; text-align: center;
+    }
+    .celia-fab-theme { right: 1rem; }
+    .celia-fab-download { right: calc(1rem + 2.5rem + 2px); }
   </style>
 </head>
 <body>
-  <button onclick="celiaToggleTheme()" aria-label="Toggle dark/light theme" style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">🌓</button>
+  <button onclick="celiaToggleTheme()" aria-label="Toggle dark/light theme" class="celia-fab celia-fab-theme">🌓</button>
   <main class="container">
     <h1>celia</h1>
     <div id="dashboard-content">

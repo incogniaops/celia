@@ -26,6 +26,7 @@ _SETTINGS = Settings(
     google_client_secret="secret",
     profile_height_m=1.80,
     profile_birth_date=date(2000, 1, 1),
+    profile_name="Test User",
 )
 
 

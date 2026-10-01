@@ -10,6 +10,7 @@ class Settings:
     google_client_secret: str
     profile_height_m: float
     profile_birth_date: date
+    profile_name: str
 
 
 def get_settings() -> Settings:
@@ -33,10 +34,15 @@ def get_settings() -> Settings:
     if not profile_birth_date:
         raise RuntimeError("PROFILE_BIRTH_DATE environment variable is not set")
 
+    profile_name = os.environ.get("PROFILE_NAME")
+    if not profile_name:
+        raise RuntimeError("PROFILE_NAME environment variable is not set")
+
     return Settings(
         database_url=database_url,
         google_client_id=google_client_id,
         google_client_secret=google_client_secret,
         profile_height_m=float(profile_height_m),
         profile_birth_date=date.fromisoformat(profile_birth_date),
+        profile_name=profile_name,
     )

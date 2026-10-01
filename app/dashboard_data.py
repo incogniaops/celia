@@ -248,6 +248,43 @@ def get_monthly_glucose_calendar(db: Session, start: datetime, end: datetime) ->
     return weeks
 
 
+def get_daily_glucose_profiles(db: Session, start: datetime, end: datetime) -> list[list[dict | None]]:
+    """Week-row/weekday-column grid (same Monday-start shape as
+    get_monthly_glucose_calendar) where each day carries its own raw
+    (minute_of_day, value) points, not just an average -- the data-sharing
+    PDF's daily-profile grid (see design.md), modelled on the user's real
+    LibreView AGP report's "Perfiles de glucosa diarios" section. Points are
+    left raw (not bucketed) since a single day's FreeStyle Libre readings are
+    already sparse enough (~15-minute cadence) to plot directly.
+    """
+    readings = get_glucose_trend(db, start, end)
+    points_by_day: dict[date, list[tuple[int, float]]] = {}
+    for reading in readings:
+        day = reading.device_timestamp.date()
+        minute_of_day = reading.device_timestamp.hour * 60 + reading.device_timestamp.minute
+        points_by_day.setdefault(day, []).append((minute_of_day, glucose_value(reading)))
+
+    start_day = start.date()
+    end_day = end.date()
+    grid_start = start_day - timedelta(days=start_day.weekday())
+    grid_end = end_day + timedelta(days=6 - end_day.weekday())
+
+    weeks: list[list[dict | None]] = []
+    week: list[dict | None] = []
+    day = grid_start
+    while day <= grid_end:
+        if start_day <= day <= end_day:
+            points = sorted(points_by_day.get(day, []))
+            week.append({"date": day, "points": points})
+        else:
+            week.append(None)
+        if len(week) == 7:
+            weeks.append(week)
+            week = []
+        day += timedelta(days=1)
+    return weeks
+
+
 def get_current_biometric_profile(db: Session) -> dict[str, HealthMetric]:
     """Most recent value per biometric metric type, regardless of any
     selected date range -- "current", not "within the chart's window".

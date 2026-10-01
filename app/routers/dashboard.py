@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,7 @@ from app.dashboard_data import (
     get_agp_percentile_bands,
     get_bmi,
     get_current_biometric_profile,
+    get_daily_glucose_profiles,
     get_glucose_summary_stats,
     get_glucose_trend,
     get_insulin_carb_markers,
@@ -21,6 +22,8 @@ from app.dashboard_data import (
 )
 from app.config import Settings, get_settings
 from app.database import get_db
+from app.pdf_export.render import generate_report_pdf
+from app.pdf_export.report_data import build_report_context
 from app.timezone import MEXICO_CITY
 
 router = APIRouter(tags=["dashboard"])
@@ -124,3 +127,31 @@ def dashboard(
     if request.headers.get("hx-request") == "true":
         return templates.TemplateResponse(request, "dashboard_content.html", context)
     return templates.TemplateResponse(request, "dashboard.html", context)
+
+
+@router.get("/dashboard/export.pdf")
+def export_pdf(
+    start: str | None = None,
+    end: str | None = None,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> Response:
+    start_dt, end_dt = _resolve_range(start, end)
+
+    context = build_report_context(
+        profile_name=settings.profile_name,
+        start_date=start_dt.date(),
+        end_date=end_dt.date(),
+        glucose_summary=get_glucose_summary_stats(db, start_dt, end_dt),
+        agp_bands=get_agp_percentile_bands(db, start_dt, end_dt),
+        daily_profile_weeks=get_daily_glucose_profiles(db, start_dt, end_dt),
+        generated_date=datetime.now(MEXICO_CITY).date().isoformat(),
+    )
+    pdf_bytes = generate_report_pdf(context)
+
+    filename = f"celia-{start_dt.date().isoformat()}-{end_dt.date().isoformat()}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

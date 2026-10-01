@@ -1,5 +1,59 @@
 # Changelog
 
+## [2026-10-01] - Implement data-sharing as a PDF export
+
+- feat: implement data-sharing (US-05) as a downloadable PDF export instead
+  of a signed share link, resolving OD-02 -- a new GET
+  /dashboard/export.pdf route (reusing the dashboard's own start/end
+  range-resolution) renders a Jinja2 .tex template and compiles it with
+  Tectonic, a single self-contained LaTeX engine binary added to the
+  Containerfile rather than a full TeX Live install; its package cache is
+  warmed at image-build time by compiling the real template (not a
+  separately hand-maintained throwaway document) against synthetic sample
+  data, so generating a report at runtime needs no network access
+  (verified with podman run --network none); a new get_daily_glucose_profiles
+  in dashboard_data.py reuses get_glucose_trend's readings grouped by
+  calendar day for the report's daily-profile grid; the user's own name is
+  read from a new PROFILE_NAME environment variable, following
+  PROFILE_HEIGHT_M/PROFILE_BIRTH_DATE's existing precedent; a small square
+  download-icon button sits next to the dark/light theme toggle
+- fix: Jinja2's default doubled-paren-friendly delimiters broke on the
+  template's own pgfplots coordinate lists (a literal "(" before a "((x))"
+  variable confused Jinja2's own paren-balancing expression parser) --
+  switched to the word-prefixed brace delimiters \BLOCK{ }/\VAR{ }, caught
+  locally before it ever reached the Containerfile
+- fix: an unescaped "%" in a band-target string (e.g. "<25%") silently
+  truncated a LaTeX table row as a comment, merging it with the next row
+  and breaking the table -- applied the existing latex_escape filter to it
+- fix: the report's PDF compiled fine locally but failed offline at
+  runtime with "File size11.clo not found", because the first hand-written
+  cache-warming document used a different \documentclass font-size option
+  than the real template; switched cache-warming to compile the real
+  template (via a new warmup.py rendering it with synthetic data) so this
+  class of drift is no longer possible, catching a second instance of the
+  same drift (a missing pgfplots groupplots library) immediately
+- fix: the daily-profile grid forced a page break every 4 week-rows
+  regardless of how much room was left on the page -- the user flagged a
+  30-day report as "horrendo" (cut short on page 1, page 2 almost entirely
+  blank); removed the forced break and let LaTeX paginate each
+  self-contained week-row naturally, so a 30-day range now renders on a
+  single page
+- fix: the user rejected the report's look twice more after the
+  pagination fix -- the default serif font ("la fuente es horrenda") and
+  bare floating text with no resemblance to the real Abbott/LibreView
+  report it's modelled on ("el layout no se parece en absoluto"); switched
+  to Latin Modern Sans via fontspec, loaded by its exact bundled .otf
+  filename rather than by font name (this sandboxed build has no
+  fontconfig database for the usual by-name lookup -- \setmainfont{Latin
+  Modern Sans} failed outright, and an earlier helvet-based attempt
+  compiled without error but silently stayed serif), and restructured
+  every section into Abbott-style shaded tcolorbox panels with the top two
+  made equal-height via tcbraster
+- docs: bring PS-CELIA-001 (v1.2 -> v1.3) in line with US-05 now being
+  built -- rewrite its acceptance criteria for the actual PDF-export
+  mechanism, close OD-02, and correct BR-01/Q-05/A-04 and the readiness
+  section, which all still described a signed share link
+
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
 - docs: bring README.md in line with the current build and the anchor

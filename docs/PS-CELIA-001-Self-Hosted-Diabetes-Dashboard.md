@@ -3,14 +3,16 @@
 | Field | Value |
 |---|---|
 | Product Specification ID | PS-CELIA-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | **Engineering Ready** |
 | Product Manager | Rodrigo Álvarez |
 | Product Owner | Rodrigo Álvarez |
 | Date | 2026-09-29 |
-| Last Updated | 2026-09-30 |
+| Last Updated | 2026-10-01 |
 
 **Version 1.2 note:** This revision brings the specification back in line with what was actually built during the hacking days, which grew beyond the original v1.1 MVP scope through ongoing user feedback: a fourth data source (US-07, Wyze body-composition export), a substantially richer dashboard (medication-adherence calendar, time-in-range/AGP/monthly-glucose-calendar pattern views, A1C/BMI/metabolic-age cards, date-range presets), and a corrected BR-06 (the real cross-source precedence is between Google Health and Wyze, not MyTherapy, which never persists competing data at all). US-05 (sharing) and US-06 (sensor log) remain as specified but not yet built.
+
+**Version 1.3 note:** US-05 is now built, resolving OD-02: the share mechanism is a downloadable PDF export (LaTeX-typeset via Tectonic, styled on the user's own real LibreView AGP report), generated on demand for the dashboard's selected date range, which the user prints or emails to a doctor himself -- not a signed link. The two acceptance criteria describing link-specific behaviour (view-only link access, revocation) are replaced with PDF-specific ones. BR-01, Q-05 and A-04 are updated to match. US-06 (sensor log) remains specified but not yet built.
 
 ## 1. Delivery Context
 
@@ -18,7 +20,7 @@
 *Business objective:* one self-hosted place to bring together a single person's diabetes-related data — glucose readings, medication adherence and, eventually, other health metrics — so it can be reviewed and shared without depending on the separate, closed ecosystems (Abbott/LibreView, MyTherapy, Google/Apple) that produce it.
 
 **Current Feature:** F1 — Self-Hosted Diabetes Dashboard.
-The user (Rodrigo) ingests exports from FreeStyle Libre and MyTherapy, a Google Health API sync for weight, vitals (body fat, heart rate, resting heart rate) and activity (steps, sleep), and a Wyze body-composition export (muscle mass, BMI, body water, lean body mass, bone mass, protein, visceral fat, BMR, metabolic age, skeletal muscle rate, fat content, subcutaneous fat, plus its own weight/body-fat/heart-rate readings). He views all of it as one consolidated, time-aligned dashboard: a glucose trend with insulin/carbohydrate markers, a medication-adherence calendar, glucose pattern views (time-in-range, ambulatory glucose profile, monthly calendar), and a biometric-and-glucose-summary card row (metabolic-age delta, weight, body fat, BMI, glucose average, estimated A1C), filterable by one-click date-range presets (7/14/30/90 days) — in a browser on desktop or mobile. He can produce a read-only view he shares with his doctors.
+The user (Rodrigo) ingests exports from FreeStyle Libre and MyTherapy, a Google Health API sync for weight, vitals (body fat, heart rate, resting heart rate) and activity (steps, sleep), and a Wyze body-composition export (muscle mass, BMI, body water, lean body mass, bone mass, protein, visceral fat, BMR, metabolic age, skeletal muscle rate, fat content, subcutaneous fat, plus its own weight/body-fat/heart-rate readings). He views all of it as one consolidated, time-aligned dashboard: a glucose trend with insulin/carbohydrate markers, a medication-adherence calendar, glucose pattern views (time-in-range, ambulatory glucose profile, monthly calendar), and a biometric-and-glucose-summary card row (metabolic-age delta, weight, body fat, BMI, glucose average, estimated A1C), filterable by one-click date-range presets (7/14/30/90 days) — in a browser on desktop or mobile. He can generate a downloadable PDF export of that same view, styled as an editorial clinical report, to print or email to his doctors.
 
 **Current Product Iteration:** MVP (México Tech Hub SDD Hackathon, 2026-09-21 to 2026-10-02; core hacking days 2026-09-29 to 2026-10-01).
 
@@ -79,19 +81,19 @@ Future Product Specifications beyond these are expected but have not yet been de
 - A consolidated dashboard view: glucose trend with insulin/carbohydrate markers (from Libre), a medication-adherence calendar (from MyTherapy), glucose pattern views (time-in-range summary, ambulatory glucose profile, monthly glucose calendar), and a biometric-and-glucose-summary card row (metabolic-age delta, weight, body fat, BMI, glucose average/%CV, estimated A1C), viewable for a chosen date range via one-click presets (last 7/14/30/90 days).
 - Compute BMI and an estimated A1C (Glucose Management Indicator) from ingested data rather than ingesting them directly, using two fixed personal facts (height, birth date) that no ingestion source provides; the dashboard shows only the signed difference between metabolic age and chronological age, never the chronological age itself, so it never reveals the user's real age even indirectly.
 - Responsive web UI usable in a desktop browser and a mobile browser, without a dedicated native app.
-- Generate a read-only shareable view (link and/or exportable report) of the dashboard for a chosen date range, for sharing with a doctor.
+- Generate a downloadable PDF export of the dashboard for a chosen date range, for the user to print or email to a doctor himself.
 - Self-hosted deployment (single instance, single user) on the user's own homelab server, as a Docker deployment or a Kubernetes deployment.
 - Maintain a manually-entered sensor log (serial, start date, end date, and a status code at start and at close) for the user's FreeStyle Libre sensors, as the one deliberate exception to "no manual data entry" (see Assumption A-06 and US-06).
 
 **Data Categories Shared with Doctors**
 
-The read-only view generated by US-05 may include the following personal health data, all of it sensitive:
+The PDF export generated by US-05 may include the following personal health data, all of it sensitive:
 
 - **Biometric profile:** weight, height, body fat percentage, muscle mass, BMI, heart rate, resting heart rate, and the metabolic-age-vs-chronological-age delta (the chronological age itself is deliberately never shown, even on this view).
 - **Glucose data:** readings and trends from FreeStyle Libre (the sole glucose source), plus derived time-in-range, ambulatory glucose profile and estimated A1C (GMI) figures.
 - **Medication data:** medication names, schedules and adherence from MyTherapy.
 
-This data is normally private. The user knowingly includes it in celia and in what he shares, in order to give his doctors a fuller picture. Height and birth date are fixed personal facts kept in celia's deployment configuration (environment variables), not in source control or the database, since no ingestion source provides either. Q-05 governs how it must be protected in storage and in transit to a shared link.
+This data is normally private. The user knowingly includes it in celia and in what he shares, in order to give his doctors a fuller picture. Height, birth date and the user's own name are fixed personal facts kept in celia's deployment configuration (environment variables), not in source control or the database, since no ingestion source provides any of them. Q-05 governs how it must be protected in storage and in the exported PDF.
 
 **Out of Scope (this iteration)**
 - Manual data entry of glucose, meals, insulin or medication — all data enters celia only through uploaded exports. The sensor log (US-06) is the sole exception to this rule.
@@ -108,7 +110,7 @@ This data is normally private. The user knowingly includes it in celia and in wh
 - **A-02:** LibreView and MyTherapy exports are downloaded manually by the user from their respective portals/apps and uploaded to celia; celia does not authenticate against Abbott or MyTherapy directly. MyTherapy's CSV export ("Archive.csv") is the preferred format — confirmed to cover full history, not just one month — with the monthly PDF report as a fallback if the CSV isn't available.
 - **A-03:** The Google Health API is reachable with a personal Google account and OAuth credentials the user provisions himself, in Testing publishing status with the user added as a test user — confirmed during the hackathon to need no Google verification/review at this scale (verification is only required above 100 users or for a public launch). In practice, the data behind it comes from a Xiaomi smartband (steps, sleep, cardio points, energy, via "Mi Fitness") and a Wyze smart scale ("Wyze — Never Wonder", weight), both currently visible in the Google Fit consumer app; celia consumes it through the Google Health API rather than integrating with Xiaomi or Wyze directly. Glucose is never sourced from Google Health — FreeStyle Libre (US-01) is the sole glucose source.
 - **A-08:** The Google Health API requires two separate one-time setup actions before it returns third-party data at all, both confirmed live during the hackathon: (1) linking the Google account at `fitbit.google.com/auth/signup`, and (2) within the Google Health app, connecting Health Connect under Connections → Partner apps. Step (1) alone only exposes natively-entered Fitbit data (e.g. a manual weigh-in); only after step (2) does the API return real Wyze/Xiaomi data (confirmed: `dataSource.platform: HEALTH_CONNECT`). Historical backfill after connecting is partial — this user's Wyze history goes back to 2026-07-09, but the API only returned records from 2026-08-19 onward (see US-03).
-- **A-04:** Doctors consuming the shared view do not need their own celia account; the share mechanism is a link or exported file they open outside celia.
+- **A-04:** Doctors consuming the shared view do not need their own celia account; the share mechanism is a PDF export the user downloads and opens, prints or emails outside celia.
 - **A-05:** Self-hosting infrastructure (server/NAS, as discussed separately) is available and reachable only from networks the user controls or exposes deliberately.
 - **A-06:** Sensor lifetimes vary in practice — some sensors failed early and were replaced later than usual — so gaps in the glucose timeline are not a reliable signal of a sensor change on their own. The sensor log is therefore captured manually rather than inferred, as the only manual-entry exception in celia.
 - **A-07:** The "Estado" (status) code shown per sensor on the FreeStyle LibreLink app's "Acerca de" (About) screen is not documented by Abbott. Its meaning is unknown; celia stores it as an opaque string for the user's own reference (e.g. to compare against Abbott support later), not as a decodable error or health status.
@@ -235,15 +237,17 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 
 ---
 
-### US-05 — Share a read-only view with a doctor
-**As the** User, **I want** to generate a read-only view or export of my dashboard for a chosen date range, **so that** I can share it with a doctor without giving them access to celia itself.
+### US-05 — Share a PDF export with a doctor
+**As the** User, **I want** to generate a downloadable PDF export of my dashboard for a chosen date range, **so that** I can print it or email it to a doctor without giving them access to celia itself.
 
 **Business Outcome:** A doctor receives the relevant data for the chosen period without needing an account in celia.
 
 **Acceptance Criteria**
-- **AC-05.1** **Given** a date range the user selects, **when** they choose to share, **then** celia produces a read-only view (link) or export (file) covering only that range.
-- **AC-05.2** **Given** a generated read-only link, **when** it is opened by anyone who has it, **then** it shows the dashboard for that date range only, with no ability to upload, sync, or edit data.
-- **AC-05.3** **Given** a shared link, **when** the user chooses to revoke it, **then** it no longer grants access.
+- **AC-05.1** **Given** a date range the user selects, **when** they choose to export, **then** celia generates a downloadable PDF covering only that range, typeset as an editorial clinical report (LaTeX via Tectonic), styled on the user's own real LibreView AGP report: a header (name, date range -- no birth date or real age), a time-in-range summary against the standard AGP consensus targets, a glucose-statistics summary (average, estimated A1C/GMI, %CV), an AGP percentile-band chart, and a daily-glucose-profile grid.
+- **AC-05.2** **Given** a generated PDF, **when** the user opens it, **then** it does not show a "percentage of sensor time active" figure (no sensor-log data to compute one from yet) or any automatically-generated clinical commentary -- celia presents the same computed figures and charts the dashboard already shows, and leaves interpretation to the doctor.
+- **AC-05.3** **Given** a date range with no glucose readings, **when** the user requests an export, **then** celia still generates a PDF identifying the user and the requested range, rather than a blank or misleading report.
+
+**Confirmed technical details:** Resolves OD-02 -- the share mechanism is a PDF export the user downloads, prints or emails himself, not a signed link; there is accordingly no link-access-control or revocation behaviour to specify. The user's name is read from a new `PROFILE_NAME` environment variable, the same deployment-configuration mechanism as `PROFILE_HEIGHT_M`/`PROFILE_BIRTH_DATE` (A-09). Tectonic's package cache is warmed at container-build time (compiling the real report template with synthetic sample data) so generating a report at runtime needs no network access.
 
 **Business Rules:** BR-01, BR-03
 **Quality Attributes:** Q-05, Q-06
@@ -290,7 +294,7 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 
 | Rule ID | Business Rule |
 |---|---|
-| BR-01 | Only the user (the single authenticated account) can upload data, trigger syncs, or manage sharing. Read-only shared links are the only access doctors have. |
+| BR-01 | Only the user (the single authenticated account) can upload data, trigger syncs, or manage sharing. A downloaded PDF export, which the user prints or emails himself, is the only access doctors have. |
 | BR-02 | Data already ingested for a given period is not duplicated when the same period is ingested again from the same source; the most recently uploaded file for an overlapping period wins. |
 | BR-03 | All dashboard views and shared views are time-aligned by date and, where available, time of day, across all sources. |
 | BR-04 | Files that do not match the expected format for their declared source (Libre, MyTherapy) are rejected with a reason, and no partial data is stored from them. |
@@ -305,7 +309,7 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 | Q-02 | Reliability | A failed upload or sync never corrupts or removes previously stored data. |
 | Q-03 | Reliability | A Google Health API sync failure, or a rejected/failed upload (Libre, MyTherapy), is surfaced to the user rather than silently ignored. |
 | Q-04 | Availability | The self-hosted instance is expected to be available whenever the user's home infrastructure is online; no formal uptime target in the MVP (single user). |
-| Q-05 | Security / Privacy | All ingested data — biometric profile (weight, body fat, muscle mass, BMI, heart rate, resting heart rate, metabolic age), glucose readings and medication data — is sensitive personal health data, normally private, and is stored only on infrastructure the user controls. Height and birth date (fixed personal facts, not ingested data) are kept in deployment environment variables, never in source control or the database; the dashboard shows only the metabolic-age-vs-chronological-age delta, never the chronological age itself. Read-only shared links reveal only dashboard data for their date range, nothing else. |
+| Q-05 | Security / Privacy | All ingested data — biometric profile (weight, body fat, muscle mass, BMI, heart rate, resting heart rate, metabolic age), glucose readings and medication data — is sensitive personal health data, normally private, and is stored only on infrastructure the user controls. Height, birth date and the user's own name (fixed personal facts, not ingested data) are kept in deployment environment variables, never in source control or the database; the dashboard and the PDF export show only the metabolic-age-vs-chronological-age delta, never the chronological age or birth date itself. The exported PDF contains only dashboard data for its date range, nothing else. |
 | Q-06 | Accessibility / Usability | The dashboard is usable on both a desktop browser and a mobile browser without a dedicated app; text and charts remain legible on a phone screen. |
 
 ## 10. Deferred Behaviour
@@ -365,7 +369,7 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 | OD-01 Final self-hosting target | User | **Closed — homelab server, deployed via Docker or Kubernetes (OD-01a below)** |
 | OD-01a Docker vs. Kubernetes for the MVP deployment | User | **Closed — a single VM in the homelab, running Podman or Docker as the container runtime; Podman for local development and testing on the user's Mac** |
 | OD-01b VM operating system: Fedora vs. Ubuntu | User | Open |
-| OD-02 Exact share mechanism: signed link vs. exported PDF/HTML file | User | Open |
+| OD-02 Exact share mechanism: signed link vs. exported PDF/HTML file | User | **Closed — a downloadable PDF export (LaTeX-typeset via Tectonic), not a signed link; the user prints or emails it himself** |
 | OD-03 Whether MyTherapy can be cut from MVP if time runs short (Google Health/weight is now verified working) | User | **Closed — moot; MyTherapy ingestion was fully built, not cut** |
 
 ## 15. Traceability
@@ -382,7 +386,7 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 
 ## 16. Product Readiness Assessment
 
-**Engineering Readiness (Definition of Ready, 2026-09-30):** ☒ **Engineering Ready.** Core scope, actors, sources and MVP stories are defined, and all four data sources have real data in hand and/or verified working: LibreView export (in hand), Google Health API (weight, body fat, heart rate, resting heart rate, steps, sleep — all verified working), MyTherapy (CSV export + monthly PDFs, in hand), and the Wyze body-composition export (in hand, verified working). All seven user stories (US-01 – US-07) are built and verified end-to-end against real data, except US-05 (sharing) and US-06 (sensor log), which remain specified but not yet built. OD-02 (share mechanism) remains open but does not block the remaining build.
+**Engineering Readiness (Definition of Ready, 2026-10-01):** ☒ **Engineering Ready.** Core scope, actors, sources and MVP stories are defined, and all four data sources have real data in hand and/or verified working: LibreView export (in hand), Google Health API (weight, body fat, heart rate, resting heart rate, steps, sleep — all verified working), MyTherapy (CSV export + monthly PDFs, in hand), and the Wyze body-composition export (in hand, verified working). Six of seven user stories (US-01 – US-05, US-07) are built and verified end-to-end against real data; only US-06 (sensor log) remains specified but not yet built. OD-02 (share mechanism) is closed, resolved as a PDF export.
 
 | Outstanding Action | Owner | Status |
 |---|---|---|
@@ -400,4 +404,4 @@ BR-01 (self-hosted, single-user access only) and Q-04/Q-05 apply to all User Sto
 - **Known external systems:** LibreView (manual export only, no public API confirmed), MyTherapy (manual PDF/CSV export only, no public API confirmed), Google Health API (verified working live during the hackathon for all six confirmed data types — see US-03 for the exact endpoint, scope, and the two-step account/Health Connect linking it requires; historical backfill is partial, varies by data type), Wyze app (manual `.xlsx` export only, no public API confirmed — see US-07).
 - Ingestion is upload- or sync-triggered only; there is no manual data-entry UI in scope.
 - Responsive web UI is required (desktop and mobile browsers); no native app.
-- All data is personal health data — treat storage and any shared link as sensitive by default (Q-05).
+- All data is personal health data — treat storage and any exported PDF as sensitive by default (Q-05).
