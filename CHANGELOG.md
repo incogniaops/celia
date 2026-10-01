@@ -2,6 +2,16 @@
 
 ## [2026-09-30] - Finalise MVP specification and adopt OpenSpec
 
+- docs: bring README.md in line with the current build and the anchor
+  spec (PS-CELIA-001 v1.2) instead of the original pre-build MVP
+  scope/status text — add a "What's built" section listing all four
+  ingested sources and the full dashboard feature set actually shipped
+  (time-in-range/AGP/monthly-calendar views, medication-adherence
+  calendar, biometric cards, date-range presets, dark/light theme
+  toggle), name US-05 (sharing) and US-06 (sensor log) as specified but
+  not yet built, link openspec/specs/ alongside the anchor doc, and
+  add licence/Python/FastAPI/SQLAlchemy/PostgreSQL/HTMX/Chart.js/
+  Podman badges
 - chore: archive the dark-light-theme-toggle OpenSpec change, syncing
   its "Dark/light theme toggle" requirement (and the two legibility
   scenarios added after the user's browser screenshot) into the main
